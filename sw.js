@@ -2,24 +2,25 @@
 // Service Worker for 大人の本格手相＆姓名判断ナビ 3D (PWA)
 // ============================================================
 
-const CACHE_NAME = 'teso-navi-cache-v2.2';
+const CACHE_NAME = 'teso-navi-cache-v2.3';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './kanji_strokes.js',
-  './name_divination.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
-  './favicon.png'
+  './favicon.png',
+  './kanji_strokes.js',
+  './name_divination.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.warn('[SW] Pre-cache partial warning:', err);
+        console.warn('[SW] Cache warn:', err);
       });
     })
   );
