@@ -1517,11 +1517,11 @@
           <div class="name-inputs-flex">
             <div class="name-field-wrap">
               <label for="input-sei">姓（名字）</label>
-              <input type="text" id="input-sei" class="name-text-input" value="阿部" placeholder="例：徳川" oninput="onNameInputChange()">
+              <input type="text" id="input-sei" class="name-text-input" value="" placeholder="例：徳川" oninput="onNameInputChange()">
             </div>
             <div class="name-field-wrap">
               <label for="input-mei">名（お名前）</label>
-              <input type="text" id="input-mei" class="name-text-input" value="好伸" placeholder="例：家康" oninput="onNameInputChange()">
+              <input type="text" id="input-mei" class="name-text-input" value="" placeholder="例：家康" oninput="onNameInputChange()">
             </div>
           </div>
 
@@ -2938,7 +2938,33 @@
         currentNameData.birthMonth || 7,
         currentNameData.birthDay || 7
       );
-      if (!result) return;
+      const firstCard = document.getElementById('first-assessment-card');
+      const gridContainer = document.getElementById('gokaku-grid-container');
+      const sansaiContainer = document.getElementById('sansai-container');
+
+      if (!result) {
+        if (firstCard) {
+          firstCard.innerHTML = `
+            <div style="text-align: center; padding: 1.8rem 1rem;">
+              <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📜</div>
+              <div style="font-family: var(--font-serif); color: var(--gold-light); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem;">
+                あなたのお名前と生年月日をご入力ください
+              </div>
+              <p style="font-size: 0.83rem; color: var(--text-sub); line-height: 1.7; max-width: 500px; margin: 0 auto;">
+                上の入力欄に姓・名を入力するか、【歴史の偉人でお試し】チップを押すと、<br>
+                五格剖象・三才配置・81数理・九星・数秘術・西洋星座の天命判定が瞬時に表示されます。
+              </p>
+            </div>
+          `;
+        }
+        if (gridContainer) {
+          gridContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 1.5rem; background: rgba(7,9,19,0.5); border-radius: 12px; border: 1px dashed rgba(212,175,55,0.25);">名前を入力すると五格（天格・人格・地格・外格・総格）の完全カルテが表示されます</div>';
+        }
+        if (sansaiContainer) {
+          sansaiContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 1.5rem;">名前を入力すると三才（天・人・地）の相生・相克バランス判定が表示されます</div>';
+        }
+        return;
+      }
       currentNameResult = result;
 
       // 0. 名前 ＆ 生年月日のファースト判定結果カード（超豪華表示）
