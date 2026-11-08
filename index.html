@@ -10,11 +10,43 @@
   <meta name="apple-mobile-web-app-title" content="本格手相ナビ3D">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <link rel="manifest" href="./manifest.json">
+      <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="application-name" content="手相姓名ナビ">
+
+  <!-- PWA 最速初期化スクリプト -->
+  <script>
+    window.pwaDeferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.pwaDeferredPrompt = e;
+      console.log('[PWA] beforeinstallprompt captured early');
+      const pwaBtn = document.getElementById('btn-pwa-install');
+      if (pwaBtn) {
+        pwaBtn.style.boxShadow = '0 0 16px rgba(212, 175, 55, 0.9)';
+      }
+      const directBox = document.getElementById('pwa-direct-install-box');
+      if (directBox) directBox.style.display = 'block';
+    });
+
+    window.addEventListener('appinstalled', () => {
+      console.log('[PWA] App successfully installed');
+      window.pwaDeferredPrompt = null;
+      if (typeof closePWAModal === 'function') closePWAModal();
+      const pwaBtn = document.getElementById('btn-pwa-install');
+      if (pwaBtn) pwaBtn.innerHTML = '<span>✅</span> アプリ保存済み';
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').then((reg) => {
+        console.log('[PWA] Service Worker registered:', reg.scope);
+      }).catch((err) => {
+        console.warn('[PWA] SW registration failed:', err);
+      });
+    }
+  </script>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3182,76 +3214,65 @@
     });
   
     // ============================================================
-    // PWA Service Worker 登録 & インストールハンドラー
+    // PWA ホーム画面保存・インストールハンドラー
     // ============================================================
-    let deferredPrompt = null;
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').then((reg) => {
-          console.log('[PWA] Service Worker registered successfully:', reg.scope);
-        }).catch((err) => {
-          console.warn('[PWA] Service Worker registration failed:', err);
-        });
-      });
-    }
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      console.log('[PWA] beforeinstallprompt captured');
-      const pwaBtn = document.getElementById('btn-pwa-install');
-      if (pwaBtn) {
-        pwaBtn.style.boxShadow = '0 0 16px rgba(212, 175, 55, 0.8)';
-      }
-      const directBtn = document.getElementById('btn-pwa-direct-install');
-      if (directBtn) {
-        directBtn.style.display = 'block';
-      }
-    });
-
-    window.addEventListener('appinstalled', () => {
-      console.log('[PWA] App successfully installed');
-      deferredPrompt = null;
-      closePWAModal();
-      const pwaBtn = document.getElementById('btn-pwa-install');
-      if (pwaBtn) {
-        pwaBtn.innerHTML = '<span>✅</span> アプリ保存済み';
-      }
-    });
-
     function promptInstallPWA() {
       playSound('tap');
-      if (deferredPrompt) {
+      if (window.pwaDeferredPrompt) {
         triggerNativeInstall();
       } else {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const iosGuide = document.getElementById('pwa-ios-guide');
-        const directBtn = document.getElementById('btn-pwa-direct-install');
-        if (iosGuide && directBtn) {
-          if (isIOS) {
-            iosGuide.style.display = 'block';
-            directBtn.style.display = 'none';
-          } else {
-            iosGuide.style.display = 'none';
-            directBtn.style.display = 'block';
-          }
-        }
-        const modal = document.getElementById('pwa-install-modal');
-        if (modal) modal.style.display = 'flex';
+        openPWAModal();
       }
     }
 
     async function triggerNativeInstall() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const choiceResult = await deferredPrompt.userChoice;
-        console.log('[PWA] User choice:', choiceResult.outcome);
-        deferredPrompt = null;
-        closePWAModal();
+      if (window.pwaDeferredPrompt) {
+        try {
+          window.pwaDeferredPrompt.prompt();
+          const choice = await window.pwaDeferredPrompt.userChoice;
+          console.log('[PWA] User response:', choice.outcome);
+          window.pwaDeferredPrompt = null;
+          closePWAModal();
+        } catch (err) {
+          console.warn('[PWA] prompt error:', err);
+          openPWAModal();
+        }
       } else {
-        alert('【インストール方法】\n\nブラウザの右上メニュー「︙」をタップし、\n「アプリをインストール」または「ホーム画面に追加」を選択してください。\n\n※ すでにホーム画面に追加済みの場合は、ホーム画面のアイコンから起動してください。');
+        openPWAModal();
       }
+    }
+
+    function openPWAModal() {
+      const modal = document.getElementById('pwa-install-modal');
+      if (!modal) return;
+      const ua = (navigator.userAgent || '').toLowerCase();
+      const isIOS = /iphone|ipad|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isAndroid = /android/.test(ua);
+
+      const directBox = document.getElementById('pwa-direct-install-box');
+      const iosGuide = document.getElementById('pwa-guide-ios');
+      const androidGuide = document.getElementById('pwa-guide-android');
+      const pcGuide = document.getElementById('pwa-guide-pc');
+
+      if (directBox) {
+        directBox.style.display = window.pwaDeferredPrompt ? 'block' : 'none';
+      }
+
+      if (isIOS) {
+        if (iosGuide) iosGuide.style.display = 'block';
+        if (androidGuide) androidGuide.style.display = 'none';
+        if (pcGuide) pcGuide.style.display = 'none';
+      } else if (isAndroid) {
+        if (iosGuide) iosGuide.style.display = 'none';
+        if (androidGuide) androidGuide.style.display = 'block';
+        if (pcGuide) pcGuide.style.display = 'none';
+      } else {
+        if (iosGuide) iosGuide.style.display = 'none';
+        if (androidGuide) androidGuide.style.display = 'none';
+        if (pcGuide) pcGuide.style.display = 'block';
+      }
+
+      modal.style.display = 'flex';
     }
 
     function closePWAModal() {
@@ -3261,31 +3282,58 @@
 
   </script>
 
-  <!-- PWA インストール案内モーダル（iOS / 非対応ブラウザ用） -->
-  <div id="pwa-install-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.82); z-index: 10000; align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: rgba(14, 18, 35, 0.98); border: 1.5px solid var(--gold-primary); border-radius: 20px; max-width: 440px; width: 100%; padding: 26px; box-shadow: 0 15px 50px rgba(0,0,0,0.85); text-align: center; position: relative;">
-      <div style="font-size: 2.8rem; margin-bottom: 8px;">📲</div>
-      <h3 style="font-family: var(--font-serif); color: var(--gold-light); font-size: 1.25rem; margin-bottom: 8px;">
-        ホーム画面にアプリを追加
+  <!-- PWA インストール案内モーダル -->
+  <div id="pwa-install-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.86); z-index: 10000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px);">
+    <div style="background: linear-gradient(160deg, #10162a 0%, #080b16 100%); border: 1.5px solid var(--gold-primary); border-radius: 20px; max-width: 460px; width: 100%; padding: 26px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); text-align: center; position: relative;">
+      <div style="font-size: 3rem; margin-bottom: 8px;">📲</div>
+      <h3 style="font-family: var(--font-serif); color: var(--gold-light); font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">
+        ホーム画面にアプリを保存
       </h3>
-      <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 18px;">
-        スマートフォンにインストールすると、全画面で起動し、電波がない場所でも手相3Dスキャン＆姓名判断が瞬時にご利用いただけます。
+      <p style="font-size: 0.84rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 18px;">
+        スマホのホーム画面に保存すると、ブラウザの枠が消えて全画面アプリとして瞬時に起動し、オフラインでもご利用いただけます。
       </p>
-      
-      <!-- iOS用ガイド -->
-      <div id="pwa-ios-guide" style="background: rgba(7, 9, 19, 0.8); border: 1px dashed rgba(212, 175, 55, 0.4); border-radius: 12px; padding: 14px; text-align: left; font-size: 0.82rem; color: var(--text-main); margin-bottom: 20px; line-height: 1.7;">
-        <strong>【iPhone / Safari の場合】</strong><br>
-        1. 画面下の共有ボタン <span style="font-size: 1.1rem; color: #38bdf8;">⎋</span>（四角から矢印）をタップ<br>
-        2. メニューから<strong>「ホーム画面に追加」</strong>をタップ<br>
-        3. 右上の<strong>「追加」</strong>を押すとホーム画面に常駐します
+
+      <!-- ブラウザ直接インストールが利用可能な場合 -->
+      <div id="pwa-direct-install-box" style="display: none; margin-bottom: 16px;">
+        <button class="btn btn-primary" onclick="triggerNativeInstall()" style="width: 100%; padding: 13px; font-size: 1rem; font-weight: 700; box-shadow: 0 4px 15px rgba(212,175,55,0.4);">
+          <span>⚡</span> 今すぐホーム画面に追加する
+        </button>
       </div>
 
-      <!-- Android / PC 直接インストールボタン -->
-      <button class="btn btn-primary" id="btn-pwa-direct-install" onclick="triggerNativeInstall()" style="width: 100%; padding: 12px; font-size: 1rem; margin-bottom: 10px;">
-        <span>⚡</span> 今すぐインストールを実行
-      </button>
+      <!-- iPhone / Safari 用ガイド -->
+      <div id="pwa-guide-ios" style="display: none; background: rgba(7, 9, 19, 0.85); border: 1px solid rgba(212, 175, 55, 0.4); border-radius: 14px; padding: 16px; text-align: left; font-size: 0.84rem; color: #fff; margin-bottom: 18px; line-height: 1.8;">
+        <div style="color: var(--gold-light); font-weight: 700; margin-bottom: 6px; font-size: 0.9rem;">
+          🍎 iPhone / iPad（Safari）の保存手順
+        </div>
+        1. 画面下の共有ボタン <span style="font-size: 1.1rem; color: #38bdf8; font-weight: bold;">⎋</span>（四角から上矢印）をタップ<br>
+        2. メニューを少しスクロールし <strong>「ホーム画面に追加」</strong> をタップ<br>
+        3. 右上の <strong>「追加」</strong> をタップすると完了です！
+      </div>
 
-      <button class="btn" onclick="closePWAModal()" style="width: 100%; padding: 10px; font-size: 0.85rem; background: transparent; border-color: rgba(255, 255, 255, 0.2); color: var(--text-sub);">
+      <!-- Android / Chrome 用ガイド -->
+      <div id="pwa-guide-android" style="display: none; background: rgba(7, 9, 19, 0.85); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 14px; padding: 16px; text-align: left; font-size: 0.84rem; color: #fff; margin-bottom: 18px; line-height: 1.8;">
+        <div style="color: #38bdf8; font-weight: 700; margin-bottom: 6px; font-size: 0.9rem;">
+          🤖 Android（Chrome）の保存手順
+        </div>
+        1. 画面右上のメニュー <strong>「︙」</strong> をタップ<br>
+        2. <strong>「アプリをインストール」</strong> または <strong>「ホーム画面に追加」</strong> をタップ<br>
+        3. 確認画面で「インストール」を押すと完了です！
+      </div>
+
+      <!-- PC用ガイド -->
+      <div id="pwa-guide-pc" style="display: none; background: rgba(7, 9, 19, 0.85); border: 1px solid rgba(212, 175, 55, 0.4); border-radius: 14px; padding: 16px; text-align: left; font-size: 0.84rem; color: #fff; margin-bottom: 18px; line-height: 1.8;">
+        <div style="color: var(--gold-light); font-weight: 700; margin-bottom: 6px; font-size: 0.9rem;">
+          💻 パソコン（Chrome / Edge）の保存手順
+        </div>
+        アドレスバー右端に表示される <strong>「インストール」アイコン</strong>（パソコンと矢印のマーク）をクリックしてください。デスクトップアプリとして追加されます。
+      </div>
+
+      <!-- アプリ内ブラウザ（LINE/X等）への注意喚起 -->
+      <div style="font-size: 0.74rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; text-align: left; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 8px;">
+        ※ LINEやX(Twitter)、Instagram等のアプリ内ブラウザでは保存が制限されます。右上のメニュー等から<strong>「Safariで開く」</strong>または<strong>「ブラウザで開く」</strong>を選択して通常のブラウザからアクセスしてください。
+      </div>
+
+      <button class="btn" onclick="closePWAModal()" style="width: 100%; padding: 10px; font-size: 0.85rem; background: transparent; border-color: rgba(255, 255, 255, 0.25); color: var(--text-sub);">
         閉じる
       </button>
     </div>
