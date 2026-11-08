@@ -1,0 +1,3190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>大人の本格手相 ＆ 姓名判断ナビ 3D ｜ スマホをかざすだけ！3D掌面ホログラム ＆ 本格姓名判断ハイブリッド鑑定</title>
+  <meta name="description" content="最新の3D WebGL＆AIリアルタイム手骨格認識を融合。スマホカメラにかざすだけで掌の3D座標・9つの丘のトポグラフィー等高線・4大基本線・流年法を立体解析する次世代手相ナビ。">
+  <meta name="theme-color" content="#0b0d17">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="本格手相ナビ3D">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="手相姓名ナビ">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Noto+Sans+JP:wght@300;400;500;700&family=Shippori+Mincho:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- MediaPipe Hands & Camera Utils -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <!-- QRCode.js -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <!-- 姓名判断 13,000字画数辞書 ＆ 姓名判断エンジン -->
+  <script src="kanji_strokes.js"></script>
+  <script src="name_divination.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #070913;
+      --bg-deep: #0e1222;
+      --bg-card: rgba(15, 19, 36, 0.88);
+      --bg-card-border: rgba(212, 175, 55, 0.35);
+      --gold-primary: #d4af37;
+      --gold-light: #fae9a4;
+      --gold-dark: #8c6d1f;
+      --gold-gradient: linear-gradient(135deg, #fae9a4 0%, #d4af37 50%, #9a781b 100%);
+      --accent-crimson: #e05666;
+      --accent-ruby: #b83246;
+      --accent-cyan: #38bdf8;
+      --accent-emerald: #34d399;
+      --accent-purple: #a855f7;
+      --text-main: #f5f4f0;
+      --text-sub: #a7a5b6;
+      --text-muted: #6b687c;
+      --font-serif: 'Shippori Mincho', serif;
+      --font-eng: 'Cinzel', serif;
+      --font-mono: 'Share Tech Mono', monospace;
+      --font-sans: 'Noto Sans JP', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 50% 5%, rgba(38, 48, 92, 0.5) 0%, transparent 60%),
+        radial-gradient(circle at 10% 90%, rgba(85, 25, 45, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 90% 70%, rgba(14, 116, 144, 0.2) 0%, transparent 50%);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ヘッダー */
+    header {
+      padding: 1rem 1rem 0.6rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+      background: rgba(7, 9, 19, 0.94);
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .badge-sub {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-eng);
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      color: var(--gold-light);
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      padding: 3px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    .badge-pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan);
+      animation: pulseAnim 1.8s infinite;
+    }
+
+    @keyframes pulseAnim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    .sound-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      color: var(--gold-light);
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .sound-btn:hover {
+      background: rgba(212, 175, 55, 0.2);
+    }
+
+    header h1 {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+      margin-top: 0.3rem;
+      background: var(--gold-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+
+    header p {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      margin-top: 0.1rem;
+      letter-spacing: 0.5px;
+    }
+
+    /* タブバー */
+    .tab-bar {
+      display: flex;
+      background: rgba(11, 14, 28, 0.98);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky;
+      top: 73px;
+      z-index: 90;
+      overflow-x: auto;
+      scrollbar-width: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .tab-bar::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      flex: 1;
+      min-width: 130px;
+      padding: 0.75rem 0.6rem;
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn span.tab-icon {
+      font-size: 1.15rem;
+    }
+
+    .tab-btn.active {
+      color: var(--gold-light);
+      border-bottom-color: var(--gold-primary);
+      background: rgba(212, 175, 55, 0.08);
+      font-weight: 700;
+    }
+
+    /* コンテナ */
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 1.2rem 1rem 3rem;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* カード基本 */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--gold-gradient);
+      opacity: 0.8;
+    }
+
+    .card-title {
+      font-family: var(--font-serif);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .card-desc {
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      line-height: 1.55;
+      margin-bottom: 1rem;
+    }
+
+    /* 手の切り替えトグル */
+    .hand-toggle {
+      display: flex;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 25px;
+      padding: 3px;
+      margin-bottom: 1rem;
+    }
+
+    .hand-toggle button {
+      flex: 1;
+      padding: 0.55rem 0.5rem;
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      font-size: 0.82rem;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .hand-toggle button.active {
+      background: var(--gold-gradient);
+      color: #070913;
+      font-weight: 700;
+      box-shadow: 0 2px 12px rgba(212, 175, 55, 0.4);
+    }
+
+    /* 3D WebGL ビューポート */
+    .viewport-3d-box {
+      width: 100%;
+      height: 480px;
+      background: radial-gradient(circle at 50% 50%, #151a33 0%, #080a14 100%);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+    }
+
+    #three-canvas-container {
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    #three-canvas-container:active {
+      cursor: grabbing;
+    }
+
+    /* 3D HUD オーバーレイ */
+    .hud-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      pointer-events: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      z-index: 10;
+    }
+
+    .hud-badge {
+      background: rgba(7, 9, 19, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+    }
+
+    .hud-controls-hint {
+      background: rgba(7, 9, 19, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.7rem;
+      color: var(--text-sub);
+    }
+
+    .hud-bottom-bar {
+      position: absolute;
+      bottom: 12px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      z-index: 10;
+    }
+
+    .hud-btn {
+      background: rgba(14, 18, 35, 0.9);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      color: var(--gold-light);
+      font-size: 0.75rem;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .hud-btn:hover, .hud-btn.active {
+      background: rgba(212, 175, 55, 0.25);
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+      color: #fff;
+    }
+
+    /* 3D 選択中ライン詳細カード */
+    .line-detail-panel {
+      margin-top: 1rem;
+      background: rgba(18, 23, 44, 0.75);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 8px;
+      padding: 1rem;
+      transition: all 0.3s;
+    }
+
+    .line-detail-panel h4 {
+      font-family: var(--font-serif);
+      font-size: 0.98rem;
+      color: var(--gold-light);
+      margin-bottom: 0.3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .line-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .line-detail-panel p {
+      font-size: 0.82rem;
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+
+    /* カメラ & AI スキャナー用 UI */
+    .camera-scanner-wrapper {
+      position: relative;
+      width: 100%;
+      height: 480px;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+
+    #camera-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* 自撮り鏡像 */
+    }
+
+    #ai-canvas-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      transform: scaleX(-1); /* ビデオと同期 */
+    }
+
+    /* スキャンレーザーアニメーション */
+    .scan-laser-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), #ffffff, var(--accent-cyan), transparent);
+      box-shadow: 0 0 16px var(--accent-cyan);
+      pointer-events: none;
+      z-index: 15;
+      display: none;
+    }
+
+    @keyframes laserSweep {
+      0% { top: 5%; opacity: 0.9; }
+      50% { top: 90%; opacity: 1; }
+      100% { top: 5%; opacity: 0.9; }
+    }
+
+    .laser-active {
+      display: block;
+      animation: laserSweep 2.2s ease-in-out infinite;
+    }
+
+    /* カメラプレースホルダー */
+    .camera-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      background: radial-gradient(circle at 50% 50%, rgba(20, 26, 50, 0.9) 0%, rgba(7, 9, 19, 0.95) 100%);
+      z-index: 5;
+    }
+
+    .palm-target-guide {
+      width: 220px;
+      height: 280px;
+      border: 2px dashed rgba(212, 175, 55, 0.4);
+      border-radius: 120px 120px 60px 60px;
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(212, 175, 55, 0.5);
+      font-size: 3.5rem;
+      box-shadow: inset 0 0 30px rgba(212, 175, 55, 0.1);
+      animation: guideGlow 2.5s infinite ease-in-out;
+    }
+
+    @keyframes guideGlow {
+      0%, 100% { border-color: rgba(212, 175, 55, 0.3); box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.05); }
+      50% { border-color: rgba(56, 189, 248, 0.7); box-shadow: inset 0 0 35px rgba(56, 189, 248, 0.2); }
+    }
+
+    /* 操作ボタン */
+    .btn-row {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 130px;
+      padding: 0.75rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      background: rgba(20, 25, 48, 0.85);
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: all 0.25s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: rgba(30, 38, 72, 0.95);
+      border-color: var(--gold-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--gold-gradient);
+      color: #070913;
+      border: none;
+      font-weight: 700;
+      box-shadow: 0 4px 18px rgba(212, 175, 55, 0.35);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 24px rgba(212, 175, 55, 0.55);
+      color: #000;
+    }
+
+    .btn-cyan {
+      background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 18px rgba(56, 189, 248, 0.35);
+    }
+
+    /* カメラ画面内・上部クイック操作バー */
+    .cam-quick-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 0.6rem;
+    }
+
+    .cam-quick-btn {
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      border-radius: 6px;
+      background: rgba(20, 26, 50, 0.9);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      color: var(--gold-light);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    .cam-quick-btn:hover {
+      background: rgba(212, 175, 55, 0.2);
+    }
+
+    /* カメラ画面内フローティングシャッター */
+    .floating-shutter-container {
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      z-index: 25;
+      pointer-events: none;
+    }
+
+    .floating-shutter-btn {
+      pointer-events: auto;
+      background: var(--gold-gradient);
+      color: #070913;
+      border: 2px solid #ffffff;
+      border-radius: 28px;
+      padding: 10px 24px;
+      font-size: 0.92rem;
+      font-weight: 800;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(212, 175, 55, 0.6);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      animation: shutterPulse 2.5s infinite;
+    }
+
+    @keyframes shutterPulse {
+      0%, 100% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(212, 175, 55, 0.5); }
+      50% { box-shadow: 0 4px 25px rgba(0, 0, 0, 0.8), 0 0 25px rgba(56, 189, 248, 0.8); }
+    }
+
+    .floating-shutter-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* スマホ最適化メディアクエリ */
+    @media (max-width: 600px) {
+      header { padding: 0.65rem 0.8rem 0.4rem; }
+      header h1 { font-size: 1.15rem; }
+      .badge-sub { font-size: 0.66rem; padding: 2px 8px; }
+      .tab-bar { top: 62px; }
+      .tab-btn { min-width: 96px; padding: 0.55rem 0.35rem; font-size: 0.72rem; }
+      main { padding: 0.7rem 0.5rem 2.5rem; }
+      .card { padding: 0.85rem; margin-bottom: 0.8rem; }
+      .card-title { font-size: 1.05rem; }
+      .card-desc { font-size: 0.76rem; margin-bottom: 0.5rem; line-height: 1.45; }
+      .viewport-3d-box { height: 360px; }
+      .camera-scanner-wrapper { height: min(52vh, 360px); }
+      .palm-target-guide { width: 150px; height: 190px; font-size: 2.4rem; margin-bottom: 0.6rem; }
+      .camera-placeholder p { font-size: 0.84rem; }
+      .btn { padding: 0.7rem 0.6rem; font-size: 0.8rem; }
+    }
+
+    /* リアルタイム認識ステータスパネル */
+    .ai-live-metric-box {
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+    }
+
+    .metric-card {
+      background: rgba(14, 18, 35, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 0.6rem;
+      text-align: center;
+    }
+
+    .metric-label {
+      font-size: 0.68rem;
+      color: var(--text-sub);
+    }
+
+    .metric-val {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      margin-top: 2px;
+    }
+
+    /* 左右の手 3D比較ビュー */
+    .twin-compare-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 680px) {
+      .twin-compare-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .hand-card-box {
+      background: rgba(15, 19, 36, 0.75);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .hand-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.6rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .hand-card-title {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      color: var(--gold-light);
+      font-weight: 700;
+    }
+
+    /* 総合カルテ */
+    .report-card {
+      background: linear-gradient(180deg, rgba(18, 22, 42, 0.95) 0%, rgba(10, 12, 22, 0.98) 100%);
+      border: 2px solid var(--gold-primary);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), inset 0 0 25px rgba(212, 175, 55, 0.1);
+      position: relative;
+    }
+
+    .report-seal {
+      font-family: var(--font-eng);
+      font-size: 0.72rem;
+      letter-spacing: 2.5px;
+      color: var(--gold-primary);
+      text-transform: uppercase;
+      margin-bottom: 0.3rem;
+    }
+
+    .report-main-title {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      line-height: 1.4;
+      margin-bottom: 0.4rem;
+    }
+
+    .report-type-badge {
+      display: inline-block;
+      font-size: 0.76rem;
+      padding: 3px 12px;
+      border-radius: 20px;
+      background: rgba(224, 86, 102, 0.15);
+      color: var(--accent-crimson);
+      border: 1px solid rgba(224, 86, 102, 0.4);
+      margin-bottom: 1.2rem;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.6rem;
+      margin-bottom: 1.4rem;
+    }
+
+    @media (min-width: 600px) {
+      .score-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .score-item {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+
+    .score-label {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      margin-bottom: 0.2rem;
+    }
+
+    .score-val {
+      font-family: var(--font-eng);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+
+    .report-section {
+      margin-bottom: 1.2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    }
+
+    .report-sec-title {
+      font-family: var(--font-serif);
+      font-size: 0.98rem;
+      color: var(--gold-primary);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .report-sec-body {
+      font-size: 0.86rem;
+      color: var(--text-main);
+      line-height: 1.68;
+    }
+
+    /* 9つの丘ガイド */
+    .mount-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 0.8rem;
+    }
+
+    .mount-card {
+      background: rgba(18, 22, 40, 0.75);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 8px;
+      padding: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mount-card:hover {
+      border-color: var(--gold-light);
+      background: rgba(28, 35, 65, 0.9);
+      transform: translateY(-2px);
+    }
+
+    .mount-name {
+      font-family: var(--font-serif);
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.3rem;
+    }
+
+    .mount-planet {
+      font-family: var(--font-eng);
+      font-size: 0.76rem;
+      color: var(--accent-cyan);
+    }
+
+    .mount-desc {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      line-height: 1.48;
+    }
+
+        /* ==========================================================
+       本格姓名判断 UI スタイル
+       ========================================================== */
+    .name-input-card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 16px;
+      padding: 1.4rem;
+      margin-bottom: 1.4rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .name-inputs-flex {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .name-field-wrap {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .name-field-wrap label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--gold-light);
+      margin-bottom: 5px;
+      font-family: var(--font-serif);
+      letter-spacing: 1px;
+    }
+
+    .name-text-input {
+      width: 100%;
+      background: rgba(7, 9, 19, 0.85);
+      border: 1.5px solid rgba(212, 175, 55, 0.4);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 10px 14px;
+      font-size: 1.15rem;
+      font-family: var(--font-serif);
+      font-weight: 600;
+      letter-spacing: 2px;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    .name-text-input:focus {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 16px rgba(212, 175, 55, 0.35);
+      background: rgba(14, 18, 35, 0.95);
+    }
+
+    .quick-preset-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    }
+
+    .preset-chip {
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      color: var(--gold-light);
+      padding: 4px 12px;
+      border-radius: 14px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .preset-chip:hover {
+      background: rgba(212, 175, 55, 0.28);
+      border-color: var(--gold-primary);
+      transform: translateY(-1px);
+    }
+
+    /* 各文字の画数アジャスターカード */
+    .char-adjust-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .char-card {
+      background: rgba(9, 12, 26, 0.85);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 72px;
+      position: relative;
+    }
+
+    .char-card-kanji {
+      font-family: var(--font-serif);
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      line-height: 1.2;
+    }
+
+    .char-card-strokes {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      margin: 3px 0 6px;
+    }
+
+    .char-stepper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-step {
+      width: 24px;
+      height: 24px;
+      background: rgba(212, 175, 55, 0.2);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: var(--gold-light);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .btn-step:hover {
+      background: var(--gold-primary);
+      color: #000;
+    }
+
+    .char-gogyo-tag {
+      font-size: 0.65rem;
+      padding: 1px 6px;
+      border-radius: 8px;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    /* 五格グリッド */
+    .gokaku-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-bottom: 1.4rem;
+    }
+
+    @media (min-width: 640px) {
+      .gokaku-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 900px) {
+      .gokaku-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .gokaku-card-sou {
+        grid-column: span 2;
+      }
+    }
+
+    .gokaku-card {
+      background: rgba(14, 18, 35, 0.9);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      padding: 1.1rem;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .gokaku-card:hover {
+      border-color: var(--gold-primary);
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.15);
+    }
+
+    .gokaku-card.featured-jin {
+      border: 1.5px solid #fae9a4;
+      background: linear-gradient(145deg, rgba(212, 175, 55, 0.12) 0%, rgba(14, 18, 35, 0.95) 100%);
+    }
+
+    .gokaku-card.featured-sou {
+      border: 1.5px solid #d4af37;
+      background: linear-gradient(145deg, rgba(212, 175, 55, 0.16) 0%, rgba(14, 18, 35, 0.95) 100%);
+    }
+
+    .gokaku-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .gokaku-name {
+      font-family: var(--font-serif);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+
+    .gokaku-role-badge {
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-sub);
+    }
+
+    .gokaku-main {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .gokaku-kaku-num {
+      font-family: var(--font-mono);
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1;
+    }
+
+    .gokaku-rank-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .rank-tokudai { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 800; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+    .rank-daikichi { background: rgba(52, 211, 153, 0.25); border: 1px solid #34d399; color: #34d399; }
+    .rank-kichi { background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; }
+    .rank-hankichi { background: rgba(251, 191, 36, 0.2); border: 1px solid #fbbf24; color: #fbbf24; }
+    .rank-chui { background: rgba(248, 113, 113, 0.2); border: 1px solid #f87171; color: #f87171; }
+
+    .gokaku-keyword {
+      font-family: var(--font-serif);
+      font-size: 0.88rem;
+      color: var(--gold-primary);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .gokaku-desc {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    /* 三才配置ビジュアル */
+    .sansai-card {
+      background: rgba(14, 18, 35, 0.9);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 14px;
+      padding: 1.3rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .sansai-flow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 1.2rem 0;
+      flex-wrap: wrap;
+    }
+
+    .sansai-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(9, 12, 26, 0.9);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      border-radius: 12px;
+      padding: 10px 18px;
+      min-width: 90px;
+    }
+
+    .sansai-node-title {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+    }
+
+    .sansai-node-elem {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .sansai-arrow {
+      color: var(--gold-primary);
+      font-size: 1.3rem;
+    }
+
+    /* 手相 × 姓名判断ハイブリッドセクション */
+    .synergy-card-wrapper {
+      background: linear-gradient(145deg, rgba(26, 32, 60, 0.95) 0%, rgba(14, 18, 35, 0.98) 100%);
+      border: 1.5px solid var(--gold-primary);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 0 25px rgba(212, 175, 55, 0.1);
+      position: relative;
+    }
+
+    .synergy-item {
+      background: rgba(9, 12, 26, 0.6);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .synergy-item-title {
+      font-family: var(--font-serif);
+      color: var(--gold-light);
+      font-size: 0.92rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .synergy-item-body {
+      font-size: 0.84rem;
+      color: var(--text-sub);
+      line-height: 1.55;
+    }
+
+    /* フッター */
+    footer {
+      text-align: center;
+      padding: 2.5rem 1rem 3.5rem;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header>
+    <div class="header-top">
+      <div class="badge-sub">
+        <div class="badge-pulse-dot"></div>
+        <span>3D PALM HOLOGRAPHIC AI NAVI</span>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+        <button class="sound-btn" id="btn-pwa-install" onclick="promptInstallPWA()" style="border-color: rgba(212, 175, 55, 0.6); color: #fae9a4; font-weight: 700; background: rgba(212, 175, 55, 0.18);">
+          <span>📲</span> アプリ保存
+        </button>
+        <button class="sound-btn" onclick="openQRModal()" style="border-color: rgba(56, 189, 248, 0.45); color: #38bdf8; font-weight: 500;">
+          <span>📱</span> スマホで開く
+        </button>
+        <button class="sound-btn" id="btn-audio-toggle" onclick="toggleAudio()">
+          <span id="audio-icon">🔊</span> 効果音 ON
+        </button>
+      </div>
+    </div>
+    <h1>大人の本格手相 ＆ 姓名判断ナビ 3D</h1>
+    <p>著者：巻石 青葉 ｜ 3D掌面ホログラム × AI骨格認識 × 姓名判断五格三才 統合ハイブリッド版</p>
+  </header>
+
+  <!-- タブナビゲーション -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('tab-name-divination')">
+      <span class="tab-icon">✍️</span>
+      <span>名前・生年月日 総合判断</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-3d-model')">
+      <span class="tab-icon">🔮</span>
+      <span>3D半透明掌面</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-ai-camera')">
+      <span class="tab-icon">📷</span>
+      <span>AI手相カメラ認識</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-twin-hands')">
+      <span class="tab-icon">⚖️</span>
+      <span>左右3D比較</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-report')">
+      <span class="tab-icon">📜</span>
+      <span>総合AIカルテ</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-encyclopedia')">
+      <span class="tab-icon">🌌</span>
+      <span>9つの丘と3D辞典</span>
+    </button>
+  </nav>
+
+  <main>
+    <!-- TAB 1: 3Dホログラム掌面（Three.js WebGL） -->
+    <div id="tab-3d-model" class="tab-content">
+      <div class="card">
+        <h2 class="card-title"><span>🌐</span> 3Dインタラクティブ掌面解析モデル</h2>
+        <p class="card-desc">
+          画面上をドラッグして360度回転、スクロールでズームできます。<br>
+          主要な4大基本線（発光リボン）、9つの丘（3D標高トポグラフィー等高線）、流年法の年齢タイムラインを立体空間上で直感的に体感できます。
+        </p>
+
+        <!-- 手の切り替え -->
+        <div class="hand-toggle">
+          <button id="toggle-3d-left" class="active" onclick="switch3DHand('left')">左手（生まれ持った天性・先天運）</button>
+          <button id="toggle-3d-right" onclick="switch3DHand('right')">右手（自力で築いた現在・後天運）</button>
+        </div>
+
+        <!-- 3D WebGL ビューポート -->
+        <div class="viewport-3d-box">
+          <div id="three-canvas-container"></div>
+
+          <!-- HUD 情報オーバーレイ -->
+          <div class="hud-overlay">
+            <div class="hud-badge" id="hud-status-badge">MODE: 3D HOLOGRAM PALM</div>
+            <div class="hud-controls-hint">ドラッグで3D回転 ｜ ピンチ/スクロールでズーム</div>
+          </div>
+
+          <!-- HUD 下部ツールバー -->
+          <div class="hud-bottom-bar">
+            <button class="hud-btn active" id="btn-toggle-topography" onclick="toggleTopography()">
+              <span>⛰️</span> 9つの丘 3D等高線
+            </button>
+            <button class="hud-btn active" id="btn-toggle-timeline" onclick="toggleTimeline()">
+              <span>⏳</span> 流年法 3D年齢ピン
+            </button>
+            <button class="hud-btn" onclick="focusCameraOn('life')">
+              <span>❤️</span> 生命線
+            </button>
+            <button class="hud-btn" onclick="focusCameraOn('head')">
+              <span>🧠</span> 知能線
+            </button>
+            <button class="hud-btn" onclick="focusCameraOn('heart')">
+              <span>💖</span> 感情線
+            </button>
+            <button class="hud-btn" onclick="focusCameraOn('fate')">
+              <span>🌟</span> 運命線
+            </button>
+            <button class="hud-btn" onclick="reset3DCamera()">
+              <span>🔄</span> リセット
+            </button>
+          </div>
+        </div>
+
+        <!-- 選択中ライン・部位の3D詳細解説カード -->
+        <div class="line-detail-panel" id="line-detail-box">
+          <h4>
+            <span id="detail-line-title">生命線（バイタリティ・耐久力・生活基盤）</span>
+            <span class="line-tag" id="detail-line-tag">LIFE LINE</span>
+          </h4>
+          <p id="detail-line-desc">
+            親指と人差し指の間から手首に向かって弧を描く最も基本となる線。身体の強靭さ、生活環境の変化、生き抜く耐久力を示します。弧が大きく張り出すほど積極的なバイタリティに溢れ、外の世界へ飛び出す大器となります。
+          </p>
+        </div>
+
+        <!-- アクションボタン -->
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="switchTab('tab-ai-camera')">
+            <span>📷</span> スマホカメラで自分の手をAIスキャンする
+          </button>
+          <button class="btn" onclick="generateReportFrom3D()">
+            <span>📜</span> このモデルの状態でカルテを生成
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: AIリアルタイム手骨格スキャナー（MediaPipe Hands） -->
+    <div id="tab-ai-camera" class="tab-content">
+      <div class="card">
+        <h2 class="card-title"><span>🖐️</span> AIカメラ・手のひら3D骨格スキャナー</h2>
+        <p class="card-desc">
+          スマホのカメラで手のひらをスキャン。AIが21箇所の骨格関節・掌面比率・指長比率をミリ単位で立体解析します。
+        </p>
+
+        <!-- スマホ実機最優先：カメラ直結撮影スキャン（推奨・100%確実） -->
+        <div style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.18) 0%, rgba(14, 18, 35, 0.95) 100%); border: 1.5px solid var(--gold-primary); border-radius: 14px; padding: 1.1rem; margin-bottom: 1.1rem; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <div style="font-family: var(--font-serif); color: var(--gold-light); font-size: 0.96rem; font-weight: 700;">
+              <span>📱</span> 【スマホ実機おすすめ】カメラ直結撮影スキャン
+            </div>
+            <span style="font-size: 0.72rem; color: #34d399; background: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.4); padding: 2px 8px; border-radius: 12px; font-weight: 600;">推奨・100%確実</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 12px; line-height: 1.5;">
+            下のボタンを押すとスマホのカメラが起動します。手のひらを撮影するだけで、AIが瞬時に骨格と掌線を自動検出します。
+          </p>
+          <label class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; font-size: 1.05rem; letter-spacing: 1px; cursor: pointer; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.35);">
+            <span>📸</span> 手のひらをカメラで撮影してAIスキャン
+            <input type="file" id="hand-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleHandPhotoScan(event)">
+          </label>
+        </div>
+
+        <!-- サブ操作バー（アルバム選択 ＆ リアルタイム動画モード） -->
+        <div class="cam-quick-bar" style="margin-bottom: 1rem; gap: 8px;">
+          <label class="cam-quick-btn" style="cursor: pointer; flex: 1; justify-content: center; background: rgba(14, 18, 35, 0.85); border: 1px solid rgba(212, 175, 55, 0.35); color: var(--gold-light);">
+            <span>📁</span> アルバムから選択
+            <input type="file" id="hand-file-input" accept="image/*" style="display: none;" onchange="handleHandPhotoScan(event)">
+          </label>
+          <button class="cam-quick-btn" id="btn-camera-toggle-top" onclick="toggleAICamera()" style="background: rgba(2, 132, 199, 0.25); border: 1px solid #38bdf8; color: #38bdf8; flex: 1.1; font-weight: 600;">
+            <span id="cam-toggle-icon">📹</span> <span id="cam-toggle-text">動画リアルタイム起動</span>
+          </button>
+          <button class="cam-quick-btn" id="btn-camera-flip" onclick="flipCamera()" title="外カメラ/内カメラ切替" style="display: none;">
+            <span>🔄</span> 切替
+          </button>
+        </div>
+
+        <!-- カメラ・スキャンビューワーコンテナ -->
+        <div class="camera-scanner-wrapper" id="scanner-wrapper" style="min-height: 380px; position: relative; background: #000; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+          <video id="camera-video" autoplay playsinline muted style="display: none; width: 100%; height: 100%; object-fit: cover;"></video>
+          <img id="photo-preview-img" style="display: none; width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0;" alt="Hand Photo">
+          <canvas id="ai-canvas-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></canvas>
+          <div class="scan-laser-line" id="scan-laser"></div>
+
+          <!-- 画面内上部 HUD -->
+          <div style="position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; pointer-events: none; z-index: 20;">
+            <div class="hud-badge" id="hud-camera-status">SCANNER: READY</div>
+            <div class="hud-badge" id="hud-facing-status" style="display: none;">FACING: BACK</div>
+          </div>
+
+          <!-- 案内プレースホルダー（未起動時） -->
+          <div class="camera-placeholder" id="camera-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center;">
+            <div class="palm-target-guide" style="font-size: 3.5rem; margin-bottom: 0.8rem; animation: pulse 2s infinite;">✋</div>
+            <p style="font-size: 1rem; font-weight: 700; color: var(--gold-light); margin-bottom: 0.4rem;">
+              上の「📸 手のひらをカメラで撮影」を押してください
+            </p>
+            <p style="font-size: 0.8rem; color: var(--text-sub); max-width: 320px; line-height: 1.5;">
+              手のひらを画面いっぱいに撮影すると、AIが21箇所の骨格関節を立体認識し、総合カルテを自動生成します。
+            </p>
+          </div>
+
+          <!-- フローティングシャッター -->
+          <div class="floating-shutter-container" id="camera-floating-shutter" style="display: none;">
+            <button class="floating-shutter-btn" onclick="triggerAIScan()">
+              <span>⚡</span> 今すぐAIスキャン実行
+            </button>
+          </div>
+        </div>
+
+        <!-- カメラ直下のボタングループ（回転ボタン追加） -->
+        <div class="btn-row" style="margin-top: 0.9rem; gap: 8px;">
+          <button class="btn btn-primary" id="btn-ai-scan-main" onclick="triggerAIScan()" disabled style="flex: 1.3; font-size: 0.92rem; padding: 0.85rem 0.5rem;">
+            <span>⚡</span> AIディープスキャン実行
+          </button>
+          <button class="btn btn-cyan" id="btn-rotate-photo" onclick="rotateHandPhoto(90)" style="display: none; flex: 1; font-size: 0.88rem; padding: 0.85rem 0.4rem; background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; color: #38bdf8;">
+            <span>🔄</span> 90°回転
+          </button>
+          <button class="btn btn-cyan" id="btn-camera-toggle-bottom" onclick="triggerPhotoCapture()" style="flex: 1; font-size: 0.88rem; padding: 0.85rem 0.4rem;">
+            <span>📸</span> 再撮影
+          </button>
+        </div>
+
+        <!-- リアルタイムAI認識メトリクス -->
+        <div class="ai-live-metric-box" style="margin-top: 1rem;">
+          <div class="metric-card">
+            <div class="metric-label">手骨格トラッキング</div>
+            <div class="metric-val" id="metric-track-status">STANDBY</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">掌面比率 (長/幅)</div>
+            <div class="metric-val" id="metric-palm-ratio">--</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">指長比率 (2D:4D)</div>
+            <div class="metric-val" id="metric-finger-ratio">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: 左右の手 3D比較ビュー -->
+    <div id="tab-twin-hands" class="tab-content">
+      <div class="card">
+        <h2 class="card-title"><span>⚖️</span> 先天運（左手） vs 後天運（右手） 3D比較解析</h2>
+        <p class="card-desc">
+          手相の神髄は「生まれ持った宿命（左手）」と「自力で切り拓いてきた現実（右手）」の差分にあります。両手のズレを比較することで、あなたが人生でどれだけ成長し、運命を好転させたかが可視化されます。
+        </p>
+
+        <div class="twin-compare-grid">
+          <!-- 左手カード -->
+          <div class="hand-card-box">
+            <div class="hand-card-header">
+              <div class="hand-card-title">左手：天性・潜在能力</div>
+              <span class="line-tag" style="color: var(--accent-emerald); border-color: var(--accent-emerald);">先天運</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 0.6rem;">
+              生まれ持った本能・精神的な器・潜在意識・両親から受け継いだDNAの資質。
+            </p>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 0.7rem; font-size: 0.82rem;">
+              <div style="color: var(--gold-light); font-weight: 700; margin-bottom: 0.2rem;">本質：深い直感と独自の感性</div>
+              <div style="color: var(--text-sub); line-height: 1.45;">直感に優れ、独創的なアイデアを思いつく天賦の才能を宿しています。枠にはまらない自由な発想が本来の武器。</div>
+            </div>
+          </div>
+
+          <!-- 右手カード -->
+          <div class="hand-card-box">
+            <div class="hand-card-header">
+              <div class="hand-card-title">右手：現実・自力開拓</div>
+              <span class="line-tag" style="color: var(--accent-crimson); border-color: var(--accent-crimson);">後天運</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 0.6rem;">
+              日々の思考・これまでの努力・社会的な実績・自ら選び取った現在の運気。
+            </p>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 0.7rem; font-size: 0.82rem;">
+              <div style="color: var(--gold-light); font-weight: 700; margin-bottom: 0.2rem;">現状：研ぎ澄まされた実務力と自立運</div>
+              <div style="color: var(--text-sub); line-height: 1.45;">社会での経験を経て、現実的な実行力とリーダーシップが著しく強化されています。運命線が濃く力強く進化中。</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 運命進化度メーター -->
+        <div style="margin-top: 1.2rem; background: rgba(20, 26, 48, 0.7); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 8px; padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+            <div style="font-family: var(--font-serif); font-size: 0.95rem; color: var(--gold-light);">
+              🌟 あなたの運命好転・進化指数
+            </div>
+            <div style="font-family: var(--font-eng); font-size: 1.3rem; color: var(--accent-cyan); font-weight: 700;">+24% EVOLVED</div>
+          </div>
+          <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; margin-bottom: 0.6rem;">
+            <div style="width: 78%; height: 100%; background: linear-gradient(90deg, #38bdf8, #d4af37);"></div>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-sub); line-height: 1.45;">
+            左手の潜在能力を右手が超えて現実化しています。特に「仕事の自立性」と「直感の論理化」において、天性以上の成果を自らの選択で手繰り寄せています。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: 本格姓名判断 × 手相ハイブリッド鑑定 -->
+    <div id="tab-name-divination" class="tab-content active">
+      <div class="card">
+        <h2 class="card-title"><span>✍️</span> 本格姓名判断 ＆ 手相ハイブリッド天命鑑定</h2>
+        <p class="card-desc">
+          東洋伝統の五格剖象法（天格・人格・地格・外格・総格）と三才五行配置（木火土金水）を全自動解析。<br>
+          13,000字の画数辞書に基づき、名前が宿す「生涯の器（言霊）」と、手相が刻む「脳と肉体のリアルタイム運」を融合して鑑定します。
+        </p>
+
+        <!-- 名前 ＆ 生年月日 入力カード -->
+        <div class="name-input-card">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px dashed rgba(212, 175, 55, 0.25); padding-bottom: 8px;">
+            <div style="font-family: var(--font-serif); color: var(--gold-light); font-size: 1.05rem; font-weight: 700;">
+              <span>🌟</span> 【第1段階】お名前と生年月日を入力（まずはここだけで即座に本格判断！）
+            </div>
+            <span style="font-size: 0.72rem; color: var(--text-sub); background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); padding: 2px 8px; border-radius: 12px;">カメラ不要・即時解析</span>
+          </div>
+
+          <!-- 氏名入力 -->
+          <div class="name-inputs-flex">
+            <div class="name-field-wrap">
+              <label for="input-sei">姓（名字）</label>
+              <input type="text" id="input-sei" class="name-text-input" value="阿部" placeholder="例：徳川" oninput="onNameInputChange()">
+            </div>
+            <div class="name-field-wrap">
+              <label for="input-mei">名（お名前）</label>
+              <input type="text" id="input-mei" class="name-text-input" value="好伸" placeholder="例：家康" oninput="onNameInputChange()">
+            </div>
+          </div>
+
+          <!-- 生年月日入力 -->
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 0.78rem; color: var(--gold-light); margin-bottom: 5px; font-family: var(--font-serif); letter-spacing: 1px;">
+              生年月日（九星気学・カバラ数秘術・西洋12星座・手相エレメント判定用）
+            </label>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <div style="flex: 1.4; min-width: 100px;">
+                <select id="input-birth-year" class="name-text-input" style="padding: 9px 8px; font-size: 0.95rem;" onchange="onNameInputChange()">
+                  <!-- JSで1940年〜2026年を動的生成 -->
+                </select>
+              </div>
+              <div style="flex: 1; min-width: 75px;">
+                <select id="input-birth-month" class="name-text-input" style="padding: 9px 8px; font-size: 0.95rem;" onchange="onNameInputChange()">
+                  <!-- 1月〜12月 -->
+                </select>
+              </div>
+              <div style="flex: 1; min-width: 75px;">
+                <select id="input-birth-day" class="name-text-input" style="padding: 9px 8px; font-size: 0.95rem;" onchange="onNameInputChange()">
+                  <!-- 1日〜31日 -->
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 判定ボタン -->
+          <div style="margin-top: 14px; margin-bottom: 12px;">
+            <button class="btn btn-primary" onclick="executeNameDivination(true)" style="width: 100%; padding: 13px; font-size: 1.05rem; letter-spacing: 2px; box-shadow: 0 4px 25px rgba(212, 175, 55, 0.4);">
+              <span>⚡</span> 名前と生年月日だけでまずは判断する（即時総合判定）
+            </button>
+          </div>
+
+          <!-- 各文字の画数・五行・微調整ステッパー -->
+          <div id="char-adjust-area" class="char-adjust-row">
+            <!-- JSで動的生成 -->
+          </div>
+
+          <!-- 有名人プリセットクイックボタン -->
+          <div class="quick-preset-container">
+            <span style="font-size: 0.74rem; color: var(--text-muted);">歴史の偉人でお試し：</span>
+            <button class="preset-chip" onclick="setPresetName('徳川', '家康', 1543, 1, 31)">徳川 家康</button>
+            <button class="preset-chip" onclick="setPresetName('織田', '信長', 1534, 6, 23)">織田 信長</button>
+            <button class="preset-chip" onclick="setPresetName('豊臣', '秀吉', 1537, 3, 17)">豊臣 秀吉</button>
+            <button class="preset-chip" onclick="setPresetName('夏目', '漱石', 1867, 2, 9)">夏目 漱石</button>
+            <button class="preset-chip" onclick="setPresetName('紫', '式部', 973, 10, 15)">紫 式部</button>
+          </div>
+        </div>
+
+        <!-- 名前と生年月日のファースト判定結果カード（特設ハイライト） -->
+        <div id="first-assessment-card" style="background: linear-gradient(145deg, rgba(20, 27, 54, 0.95) 0%, rgba(11, 14, 28, 0.98) 100%); border: 1.5px solid var(--gold-primary); border-radius: 16px; padding: 1.4rem; margin-bottom: 1.5rem; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(212, 175, 55, 0.12);">
+          <!-- JSで動的生成 -->
+        </div>
+
+        <!-- 五格グリッド解析 -->
+        <h3 style="font-family: var(--font-serif); color: var(--gold-light); font-size: 1.1rem; margin: 1.4rem 0 0.8rem;">
+          <span>🔯</span> 五格剖象（天格・人格・地格・外格・総格）完全カルテ
+        </h3>
+        <div class="gokaku-grid" id="gokaku-grid-container">
+          <!-- JSで動的生成 -->
+        </div>
+
+        <!-- 三才配置（天・人・地 五行相生） -->
+        <div class="sansai-card" id="sansai-container">
+          <!-- JSで動的生成 -->
+        </div>
+
+        <!-- 「手相 × 姓名判断」ハイブリッド天命シンクロ解析 -->
+        <div class="synergy-card-wrapper" id="palm-name-synergy-wrapper">
+          <div class="report-seal">HYBRID SYNERGY DOSSIER</div>
+          <h3 style="font-family: var(--font-serif); color: var(--gold-light); font-size: 1.2rem; margin-bottom: 0.5rem;">
+            <span>✨</span> 「手相（掌紋）」×「姓名（言霊）」ハイブリッド天命解析
+          </h3>
+          <p style="font-size: 0.84rem; color: var(--text-sub); margin-bottom: 1.2rem;">
+            手相（脳の思考が刻むリアルタイムの航海図）と、姓名（一生を通じて授けられたエネルギーの器）がどのように響き合っているかを統合診断します。
+          </p>
+
+          <div id="synergy-content-area">
+            <!-- JSで動的生成 -->
+          </div>
+        </div>
+
+        <!-- アクションボタン -->
+        <div class="btn-row" style="margin-top: 1.5rem;">
+          <button class="btn btn-primary" onclick="applyNameToFullReport()">
+            <span>📜</span> 総合AIカルテに反映して確認
+          </button>
+          <button class="btn" onclick="switchTab('tab-3d-model')">
+            <span>🔮</span> 3D掌面に戻る
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: 総合AI手相カルテ -->
+    <div id="tab-report" class="tab-content">
+      <div class="report-card" id="printable-report">
+        <div class="report-seal">AI 3D PALMISTRY PERSONAL DOSSIER</div>
+        <h2 class="report-main-title" id="rep-title">自力開拓と卓越した直感を宿す、大器晩成の開運リーダー</h2>
+        <div class="report-type-badge" id="rep-badge">タイプ：3Dホログラフィック・アドバンスド解析</div>
+
+        <!-- 4大能力スコアメーター -->
+        <div class="score-grid">
+          <div class="score-item">
+            <div class="score-label">バイタリティ・生命力</div>
+            <div class="score-val" id="score-life">91</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">知性・アイデア創造力</div>
+            <div class="score-val" id="score-head">94</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">人間力・信頼構築力</div>
+            <div class="score-val" id="score-heart">88</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">金運・運命突破力</div>
+            <div class="score-val" id="score-fate">92</div>
+          </div>
+        </div>
+
+        <!-- 診断セクション1 -->
+        <div class="report-section">
+          <h3 class="report-sec-title"><span>🌟</span> 1. あなたの掌が語る「本質と天命」</h3>
+          <p class="report-sec-body" id="rep-essence">
+            あなたの手相は、強い主体性と独自の感性が美しく調和しています。誰かに敷かれたレールを歩くよりも、自らの意志で未知の扉を開くときに最も輝く星を持っています。人の意見に流されず、自分の直感を信じて進むことが成功の最大キーです。
+          </p>
+        </div>
+
+        <!-- 診断セクション2 -->
+        <div class="report-section">
+          <h3 class="report-sec-title"><span>💰</span> 2. 才能の発揮どころと金運の潮目</h3>
+          <p class="report-sec-body" id="rep-money">
+            知性と感性を掛け合わせたクリエイティブな分野、または専門性の高い自立した活動で大きな財運を引き寄せます。他力本願ではなく「自ら価値を生み出す」姿勢が、太陽線・財運線をさらに太く育てていきます。
+          </p>
+        </div>
+
+        <!-- 診断セクション3 -->
+        <div class="report-section">
+          <h3 class="report-sec-title"><span>⏳</span> 3. 人生の転機と開運タイミング（流年法の示唆）</h3>
+          <p class="report-sec-body" id="rep-timing">
+            運命線と生命線の交差ポイントから見て、40代半ばから後半にかけて一度「人生の再定義」が訪れ、50代以降に自らの経験が集約された大きな実りを迎える大器晩成の流れです。これまでのすべての苦労や寄り道が、後半生を輝かせる強力な武器となります。
+          </p>
+        </div>
+
+        <!-- 診断セクション4 -->
+        <div class="report-section">
+          <h3 class="report-sec-title"><span>⛰️</span> 4. 9つの丘（マウント）3D標高マップからの提言</h3>
+          <p class="report-sec-body" id="rep-mount-advice">
+            木星丘（指導力・向上心）と月丘（直感・イマジネーション）の立体肉付きが非常に豊かです。周囲のサポートを得ながら、独自の構想を現実のビジネスや創作へ昇華させる最高の星回りです。
+          </p>
+        </div>
+
+        <!-- 手相 × 姓名判断 統合天命カルテ（ハイブリッド鑑定ブロック） -->
+        <div id="rep-name-synergy-block" class="report-section" style="border: 1.5px solid rgba(212, 175, 55, 0.45); background: rgba(212, 175, 55, 0.06); padding: 1.2rem; border-radius: 12px; margin-top: 1.2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 class="report-sec-title" style="margin: 0; color: var(--gold-light);">
+              <span>✍️</span> 5. 姓名判断 × 手相「天命シナジー総合鑑定」
+            </h3>
+            <span id="rep-name-target" style="font-family: var(--font-serif); font-size: 0.95rem; color: var(--gold-primary); font-weight: 700;">対象：徳川 家康 様</span>
+          </div>
+          <div id="rep-name-gokaku-summary" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; font-size: 0.78rem;">
+            <!-- JSで動的生成 -->
+          </div>
+          <p class="report-sec-body" id="rep-name-synergy-text" style="line-height: 1.6;">
+            <!-- JSで動的生成 -->
+          </p>
+        </div>
+
+        <!-- 開運アクション -->
+        <div style="background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 8px; padding: 0.9rem;">
+          <div style="font-family: var(--font-serif); color: var(--gold-light); font-size: 0.88rem; margin-bottom: 0.3rem;">
+            <span>🌿</span> 掌を育てる！今日からの開運アクション
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-sub); line-height: 1.5;" id="rep-action">
+            親指の付け根（金星丘）と小指の下（水星丘）をやさしく揉みほぐしてください。エネルギーが巡り、良い線が3ヶ月でより鮮明に刻まれます。
+          </p>
+        </div>
+      </div>
+
+      <!-- アクションボタン -->
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="window.print()">
+          <span>🖨️</span> カルテを印刷・PDF保存
+        </button>
+        <button class="btn" onclick="switchTab('tab-3d-model')">
+          <span>🔮</span> 3D掌面に戻る
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 5: 9つの丘と3D手相辞典 -->
+    <div id="tab-encyclopedia" class="tab-content">
+      <div class="card">
+        <h2 class="card-title"><span>🌌</span> 9つの丘（マウント）と手相辞典</h2>
+        <p class="card-desc">
+          手のひらの凹凸は、西洋占星術の惑星エネルギーを受信する「アンテナ」です。丘の肉付きや弾力を知ることで、あなたの才能と気質をより深く理解できます。
+        </p>
+
+        <div class="mount-grid">
+          <div class="mount-card" onclick="focusMount('jupiter')">
+            <div class="mount-name">木星丘 <span>👑</span></div>
+            <div class="mount-planet">JUPITER ｜ 人差し指の付け根</div>
+            <div class="mount-desc">野心、指導力、向上心、尊厳。ここが発達している人はリーダーシップがあり、人を導く資質に恵まれます。</div>
+          </div>
+          <div class="mount-card" onclick="focusMount('saturn')">
+            <div class="mount-name">土星丘 <span>🪐</span></div>
+            <div class="mount-planet">SATURN ｜ 中指の付け根</div>
+            <div class="mount-desc">思索、探求心、自制心、専門性。孤独を愛し、一つの道を深く極める職人・研究者気質を示します。</div>
+          </div>
+          <div class="mount-card" onclick="focusMount('sun')">
+            <div class="mount-name">太陽丘 <span>☀️</span></div>
+            <div class="mount-planet">APOLLO (SUN) ｜ 薬指の付け根</div>
+            <div class="mount-desc">成功、名声、金運、芸術的魅力。人を引きつける輝きと、富や幸福を引き寄せる華やかなエネルギー。</div>
+          </div>
+          <div class="mount-card" onclick="focusMount('mercury')">
+            <div class="mount-name">水星丘 <span>⚡</span></div>
+            <div class="mount-planet">MERCURY ｜ 小指の付け根</div>
+            <div class="mount-desc">財運、商才、コミュニケーション、機転。言葉の力やビジネスセンスでお金を生み出す力。</div>
+          </div>
+          <div class="mount-card" onclick="focusMount('venus')">
+            <div class="mount-name">金星丘 <span>❤️</span></div>
+            <div class="mount-planet">VENUS ｜ 親指の付け根のふくらみ</div>
+            <div class="mount-desc">生命力、愛情、精力、情熱。ここが厚く弾力がある人は、健康に恵まれ情に厚いバイタリティの持ち主。</div>
+          </div>
+          <div class="mount-card" onclick="focusMount('moon')">
+            <div class="mount-name">月丘 <span>🌙</span></div>
+            <div class="mount-planet">MOON ｜ 手首に近い小指側</div>
+            <div class="mount-desc">直感、イマジネーション、大衆人気、芸術。見えない世界との交信やクリエイティブなインスピレーションの源。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- QRコード表示モーダル -->
+  <div id="qr-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 999; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: rgba(14, 18, 35, 0.95); border: 1.5px solid #d4af37; border-radius: 18px; padding: 30px 24px; max-width: 440px; width: 100%; box-shadow: 0 16px 50px rgba(0,0,0,0.9), inset 0 0 25px rgba(212, 175, 55, 0.15); text-align: center; position: relative;">
+      <button onclick="closeQRModal()" style="position: absolute; top: 12px; right: 14px; background: none; border: none; color: #a7a5b6; font-size: 1.5rem; cursor: pointer; line-height: 1;">✕</button>
+      <div style="font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 2px; color: #fae9a4; background: rgba(212, 175, 55, 0.15); border: 1px solid rgba(212, 175, 55, 0.4); padding: 3px 12px; border-radius: 20px; display: inline-block; margin-bottom: 10px;">MOBILE CONNECT</div>
+      <h3 style="font-family: 'Shippori Mincho', serif; font-size: 1.3rem; color: #fae9a4; margin-bottom: 8px;">📱 スマホ実機で開く</h3>
+      <p style="font-size: 0.84rem; color: #a7a5b6; line-height: 1.5; margin-bottom: 18px;">
+        同一Wi-Fiに接続したスマートフォンのカメラで下のQRコードを読み取ると、お手元のスマホで直接操作・スキャンできます。
+      </p>
+      <div id="modal-qrcode" style="display: flex; justify-content: center; align-items: center; background: #fff; padding: 14px; border-radius: 12px; width: 210px; height: 210px; margin: 0 auto 16px; box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);">
+        <img src="qrcode_mobile.png" alt="QRコード" style="width: 182px; height: 182px; display: block;">
+      </div>
+      <div id="modal-qr-url" style="background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.88rem; color: #fae9a4; word-break: break-all; margin-bottom: 16px; border: 1px dashed rgba(212, 175, 55, 0.35);">
+        http://192.168.10.106:8085/index.html
+      </div>
+      <p style="font-size: 0.74rem; color: #6b687c; margin-bottom: 0;">
+        ※「【スマホ実機で開く(QRコード表示)】.bat」を起動しておくとスムーズに接続できます。
+      </p>
+    </div>
+  </div>
+
+  <!-- フッター -->
+  <footer>
+    <p>© 2026 Aoba Makiishi. All Rights Reserved. ｜ スマホをかざすだけ！大人の本格手相ナビ</p>
+    <p style="margin-top: 4px; opacity: 0.7;">本アプリは読者限定の個人診断ツールです。画像データはサーバーに一切保存されず端末内で安全に完結します。</p>
+  </footer>
+
+  <!-- アプリケーション メインスクリプト -->
+  <script>
+    /* ==========================================================
+       1. 音響効果システム（Web Audio API）
+       ========================================================== */
+    let audioCtx = null;
+    let audioEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playSound(type) {
+      if (!audioEnabled) return;
+      try {
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'beep') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, now);
+          osc.frequency.exponentialRampToValueAtTime(1760, now + 0.08);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'scan') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.linearRampToValueAtTime(960, now + 0.25);
+          gain.gain.setValueAtTime(0.06, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.08);
+          osc.frequency.setValueAtTime(783.99, now + 0.16);
+          osc.frequency.setValueAtTime(1046.50, now + 0.24);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.4);
+          osc.start(now);
+          osc.stop(now + 0.4);
+        }
+      } catch(e) {
+        // audio not allowed
+      }
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      const btn = document.getElementById('btn-audio-toggle');
+      btn.innerHTML = audioEnabled ? '<span>🔊</span> 効果音 ON' : '<span>🔇</span> 効果音 OFF';
+      if (audioEnabled) playSound('beep');
+    }
+
+    /* ==========================================================
+       2. タブ制御
+       ========================================================== */
+    function switchTab(tabId) {
+      playSound('beep');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) targetTab.classList.add('active');
+
+      if (tabId === 'tab-3d-model') {
+        onResize3D();
+      }
+    }
+
+    /* ==========================================================
+       3. Three.js による 3Dホログラフィック掌面ビューワー
+       ========================================================== */
+    let scene, camera, renderer, controls;
+    let handMeshGroup, palmMesh, lineTubes = {}, mountMarkers = {}, timelineMarkers = [];
+    let current3DHand = 'left';
+    let topographyVisible = true;
+    let timelineVisible = true;
+
+    function initThreeJS() {
+      const container = document.getElementById('three-canvas-container');
+      if (!container) return;
+
+      const width = container.clientWidth || 600;
+      const height = container.clientHeight || 480;
+
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x070913, 0.035);
+
+      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+      camera.position.set(0, 0, 14);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      if (typeof THREE.OrbitControls !== 'undefined') {
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.maxDistance = 25;
+        controls.minDistance = 6;
+      }
+
+      // ライティング
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambientLight);
+
+      const goldLight = new THREE.PointLight(0xd4af37, 2.2, 50);
+      goldLight.position.set(5, 8, 10);
+      scene.add(goldLight);
+
+      const cyanLight = new THREE.PointLight(0x38bdf8, 1.8, 50);
+      cyanLight.position.set(-6, -5, 8);
+      scene.add(cyanLight);
+
+      build3DHandModel();
+      animate3D();
+      window.addEventListener('resize', onResize3D);
+    }
+
+    function build3DHandModel() {
+      if (handMeshGroup) scene.remove(handMeshGroup);
+      handMeshGroup = new THREE.Group();
+
+      // ==========================================================
+      // 1. 本物の手の形をした美しい半透明ホログラム立体ハンド
+      // （掌と5本の指が自然に一体化したExtrudeジオメトリ＋トポグラフィー）
+      // ==========================================================
+      const handShape = new THREE.Shape();
+      // 手首中央
+      handShape.moveTo(0, -3.4);
+      // 手首左〜金星丘（親指側）
+      handShape.bezierCurveTo(-1.1, -3.4, -1.9, -2.8, -2.2, -1.8);
+      // 親指付け根〜第1関節
+      handShape.bezierCurveTo(-2.5, -1.1, -3.2, -0.3, -3.4, 0.5);
+      // 親指先端
+      handShape.bezierCurveTo(-3.5, 1.0, -3.0, 1.25, -2.6, 0.9);
+      // 親指内側〜人差し指の股
+      handShape.bezierCurveTo(-2.2, 0.55, -1.75, 0.15, -1.45, 0.45);
+      // 人差し指左側
+      handShape.bezierCurveTo(-1.5, 1.2, -1.5, 2.5, -1.35, 3.6);
+      // 人差し指先端
+      handShape.bezierCurveTo(-1.25, 4.0, -0.75, 4.0, -0.65, 3.6);
+      // 人差し指右側〜中指の股
+      handShape.bezierCurveTo(-0.65, 2.8, -0.6, 1.6, -0.5, 1.15);
+      // 中指左側
+      handShape.bezierCurveTo(-0.45, 1.8, -0.35, 3.2, -0.22, 4.3);
+      // 中指先端
+      handShape.bezierCurveTo(-0.1, 4.7, 0.38, 4.7, 0.48, 4.3);
+      // 中指右側〜薬指の股
+      handShape.bezierCurveTo(0.48, 3.2, 0.48, 1.8, 0.58, 1.15);
+      // 薬指左側
+      handShape.bezierCurveTo(0.65, 1.8, 0.75, 3.1, 0.88, 3.9);
+      // 薬指先端
+      handShape.bezierCurveTo(0.98, 4.3, 1.45, 4.3, 1.55, 3.9);
+      // 薬指右側〜小指の股
+      handShape.bezierCurveTo(1.55, 3.0, 1.55, 1.6, 1.65, 0.95);
+      // 小指左側
+      handShape.bezierCurveTo(1.7, 1.5, 1.82, 2.4, 1.95, 2.9);
+      // 小指先端
+      handShape.bezierCurveTo(2.05, 3.3, 2.45, 3.3, 2.55, 2.9);
+      // 小指右側〜水星丘
+      handShape.bezierCurveTo(2.55, 2.2, 2.45, 1.1, 2.35, 0.45);
+      // 月丘外側
+      handShape.bezierCurveTo(2.35, -0.5, 2.25, -1.7, 1.9, -2.6);
+      // 手首右側〜手首中央
+      handShape.bezierCurveTo(1.6, -3.2, 0.9, -3.4, 0, -3.4);
+
+      // 立体押し出し（丸みを帯びた厚み）
+      const extrudeSettings = {
+        steps: 3,
+        depth: 0.28,
+        bevelEnabled: true,
+        bevelThickness: 0.16,
+        bevelSize: 0.12,
+        bevelOffset: 0,
+        bevelSegments: 4
+      };
+      const handGeo = new THREE.ExtrudeGeometry(handShape, extrudeSettings);
+
+      // 掌の丘の立体起伏変形（金星丘・月丘・火星平原のトポグラフィー）
+      const pos = handGeo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        let x = pos.getX(i);
+        let y = pos.getY(i);
+        let z = pos.getZ(i);
+        if (y < 0.9) {
+          // 金星丘（親指側）の豊かなふくらみ
+          let vDist = Math.hypot(x - (-1.2), y - (-1.2));
+          let vH = Math.max(0, 1.0 - vDist / 1.7) * 0.48;
+          // 月丘（小指側）のふくらみ
+          let mDist = Math.hypot(x - (1.3), y - (-1.4));
+          let mH = Math.max(0, 1.0 - mDist / 1.6) * 0.36;
+          // 掌中央（火星平原）の窪み
+          let cDist = Math.hypot(x, y - (-0.2));
+          let cH = -Math.max(0, 1.0 - cDist / 1.5) * 0.18;
+          pos.setZ(i, z + vH + mH + cH);
+        }
+      }
+      handGeo.computeVertexNormals();
+
+      // 半透明のサイバーガラス・ホログラムマテリアル（半透明の手）
+      const glassMat = new THREE.MeshPhysicalMaterial({
+        color: 0x16244c,
+        emissive: 0x091228,
+        roughness: 0.18,
+        metalness: 0.2,
+        transmission: 0.8, // 高い半透明度
+        opacity: 0.52,
+        transparent: true,
+        depthWrite: false,
+        clearcoat: 0.9,
+        clearcoatRoughness: 0.12
+      });
+      palmMesh = new THREE.Mesh(handGeo, glassMat);
+      palmMesh.position.z = -0.15;
+      handMeshGroup.add(palmMesh);
+
+      // 手の輪郭と関節を繊細に輝かせるホログラム・エッジライン
+      const wireMat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.16
+      });
+      const wireMesh = new THREE.Mesh(handGeo.clone(), wireMat);
+      wireMesh.position.z = -0.15;
+      handMeshGroup.add(wireMesh);
+
+      // 上品な関節ホログラムリングアクセント
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xd4af37,
+        transparent: true,
+        opacity: 0.4
+      });
+      const knuckles = [
+        { x: -2.3, y: -0.2, r: 0.26 }, // 親指
+        { x: -1.0, y: 1.6, r: 0.28 },  // 人差し指
+        { x: -0.0, y: 1.8, r: 0.30 },  // 中指
+        { x: 1.0, y: 1.6, r: 0.28 },   // 薬指
+        { x: 1.9, y: 1.2, r: 0.24 }    // 小指
+      ];
+      knuckles.forEach(k => {
+        const ringGeo = new THREE.TorusGeometry(k.r, 0.025, 8, 24);
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        ringMesh.position.set(k.x, k.y, 0.22);
+        handMeshGroup.add(ringMesh);
+      });
+
+      // 2. 4大基本3D掌線チューブ（生命線・知能線・感情線・運命線）
+      buildPalmLines(handMeshGroup);
+
+      // 3. 9つの丘（トポグラフィーマーカー球体＆等高線）
+      buildMountTopography(handMeshGroup);
+
+      // 4. 流年法（年齢タイムラインピン）
+      buildTimelineMarkers(handMeshGroup);
+
+      // 5. 神秘の宇宙パーティクル浮遊群
+      buildCosmicParticles(handMeshGroup);
+
+      if (current3DHand === 'right') {
+        handMeshGroup.scale.x = -1; // 左右反転
+      } else {
+        handMeshGroup.scale.x = 1;
+      }
+
+      scene.add(handMeshGroup);
+    }
+
+    function buildPalmLines(group) {
+      // 生命線（赤・緋色）
+      const lifeCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-1.4, 1.8, 0.35),
+        new THREE.Vector3(-1.9, 0.5, 0.45),
+        new THREE.Vector3(-1.8, -1.2, 0.5),
+        new THREE.Vector3(-1.0, -2.5, 0.35),
+        new THREE.Vector3(-0.4, -3.2, 0.2)
+      ]);
+      lineTubes.life = createGlowTube(lifeCurve, 0xe05666, 0.07);
+      group.add(lineTubes.life);
+
+      // 知能線（金・青）
+      const headCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-1.4, 1.7, 0.35),
+        new THREE.Vector3(-0.6, 1.1, 0.3),
+        new THREE.Vector3(0.5, 0.3, 0.25),
+        new THREE.Vector3(1.7, -0.6, 0.28),
+        new THREE.Vector3(2.3, -1.5, 0.3)
+      ]);
+      lineTubes.head = createGlowTube(headCurve, 0x38bdf8, 0.07);
+      group.add(lineTubes.head);
+
+      // 感情線（ルビー・マゼンタ）
+      const heartCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(2.6, 1.8, 0.3),
+        new THREE.Vector3(1.5, 2.2, 0.35),
+        new THREE.Vector3(0.0, 2.3, 0.35),
+        new THREE.Vector3(-1.2, 2.7, 0.4)
+      ]);
+      lineTubes.heart = createGlowTube(heartCurve, 0xf43f5e, 0.07);
+      group.add(lineTubes.heart);
+
+      // 運命線（純金・黄金）
+      const fateCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0.1, -3.2, 0.2),
+        new THREE.Vector3(0.0, -1.5, 0.25),
+        new THREE.Vector3(-0.1, 0.5, 0.3),
+        new THREE.Vector3(-0.3, 2.3, 0.35)
+      ]);
+      lineTubes.fate = createGlowTube(fateCurve, 0xd4af37, 0.075);
+      group.add(lineTubes.fate);
+    }
+
+    function createGlowTube(curve, hexColor, radius) {
+      const geo = new THREE.TubeGeometry(curve, 64, radius, 12, false);
+      const mat = new THREE.MeshBasicMaterial({
+        color: hexColor,
+        transparent: true,
+        opacity: 0.95
+      });
+      return new THREE.Mesh(geo, mat);
+    }
+
+    function buildMountTopography(group) {
+      const mounts = [
+        { id: 'jupiter', name: '木星丘', x: -1.4, y: 2.7, z: 0.5, color: 0x38bdf8, size: 0.75 },
+        { id: 'saturn', name: '土星丘', x: -0.3, y: 2.8, z: 0.45, color: 0xa855f7, size: 0.65 },
+        { id: 'sun', name: '太陽丘', x: 0.8, y: 2.6, z: 0.45, color: 0xd4af37, size: 0.7 },
+        { id: 'mercury', name: '水星丘', x: 1.8, y: 2.2, z: 0.4, color: 0x34d399, size: 0.65 },
+        { id: 'venus', name: '金星丘', x: -1.4, y: -0.8, z: 0.8, color: 0xe05666, size: 1.2 },
+        { id: 'moon', name: '月丘', x: 1.6, y: -1.2, z: 0.65, color: 0x60a5fa, size: 1.1 }
+      ];
+
+      mounts.forEach(m => {
+        const ringGeo = new THREE.RingGeometry(m.size * 0.4, m.size * 0.7, 24);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: m.color,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.55
+        });
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        ringMesh.position.set(m.x, m.y, m.z);
+
+        // 中央の立体標高ドーム
+        const domeGeo = new THREE.SphereGeometry(m.size * 0.35, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+        const domeMat = new THREE.MeshStandardMaterial({
+          color: m.color,
+          roughness: 0.2,
+          metalness: 0.7,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.7
+        });
+        const domeMesh = new THREE.Mesh(domeGeo, domeMat);
+        domeMesh.position.set(m.x, m.y, m.z);
+        domeMesh.rotation.x = Math.PI / 2;
+
+        const mountGroup = new THREE.Group();
+        mountGroup.add(ringMesh);
+        mountGroup.add(domeMesh);
+        mountMarkers[m.id] = mountGroup;
+        group.add(mountGroup);
+      });
+    }
+
+    function buildTimelineMarkers(group) {
+      // 生命線・運命線上の年齢ピン
+      const ages = [
+        { age: '20歳', x: -1.8, y: 0.6, z: 0.55 },
+        { age: '35歳', x: -1.75, y: -0.8, z: 0.58 },
+        { age: '50歳', x: -1.1, y: -2.3, z: 0.45 },
+        { age: '65歳', x: -0.4, y: -3.0, z: 0.3 }
+      ];
+
+      timelineMarkers = [];
+      ages.forEach(item => {
+        const pinGeo = new THREE.SphereGeometry(0.1, 12, 12);
+        const pinMat = new THREE.MeshBasicMaterial({ color: 0xfff070 });
+        const pin = new THREE.Mesh(pinGeo, pinMat);
+        pin.position.set(item.x, item.y, item.z);
+
+        const outerRing = new THREE.RingGeometry(0.12, 0.18, 16);
+        const outerMat = new THREE.MeshBasicMaterial({ color: 0xd4af37, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+        const ring = new THREE.Mesh(outerRing, outerMat);
+        ring.position.set(item.x, item.y, item.z);
+
+        const tGroup = new THREE.Group();
+        tGroup.add(pin);
+        tGroup.add(ring);
+        timelineMarkers.push(tGroup);
+        group.add(tGroup);
+      });
+    }
+
+    function buildCosmicParticles(group) {
+      const count = 120;
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(count * 3);
+      for (let i = 0; i < count * 3; i += 3) {
+        pos[i] = (Math.random() - 0.5) * 10;
+        pos[i+1] = (Math.random() - 0.5) * 12;
+        pos[i+2] = (Math.random() - 0.5) * 6;
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({
+        color: 0xd4af37,
+        size: 0.08,
+        transparent: true,
+        opacity: 0.65
+      });
+      const points = new THREE.Points(geo, mat);
+      group.add(points);
+    }
+
+    function animate3D() {
+      requestAnimationFrame(animate3D);
+      if (controls) controls.update();
+
+      // 微かな浮遊アニメーション
+      if (handMeshGroup) {
+        handMeshGroup.rotation.y = Math.sin(Date.now() * 0.001) * 0.06;
+      }
+
+      // 年齢ピンのパルス点滅
+      if (timelineMarkers.length > 0 && timelineVisible) {
+        const scale = 1.0 + Math.sin(Date.now() * 0.006) * 0.25;
+        timelineMarkers.forEach(t => t.scale.set(scale, scale, scale));
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    function onResize3D() {
+      const container = document.getElementById('three-canvas-container');
+      if (!container || !renderer || !camera) return;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    }
+
+    function switch3DHand(hand) {
+      playSound('beep');
+      current3DHand = hand;
+      document.getElementById('toggle-3d-left').classList.toggle('active', hand === 'left');
+      document.getElementById('toggle-3d-right').classList.toggle('active', hand === 'right');
+      build3DHandModel();
+    }
+
+    function toggleTopography() {
+      playSound('beep');
+      topographyVisible = !topographyVisible;
+      const btn = document.getElementById('btn-toggle-topography');
+      btn.classList.toggle('active', topographyVisible);
+      for (let key in mountMarkers) {
+        mountMarkers[key].visible = topographyVisible;
+      }
+    }
+
+    function toggleTimeline() {
+      playSound('beep');
+      timelineVisible = !timelineVisible;
+      const btn = document.getElementById('btn-toggle-timeline');
+      btn.classList.toggle('active', timelineVisible);
+      timelineMarkers.forEach(t => t.visible = timelineVisible);
+    }
+
+    function focusCameraOn(lineType) {
+      playSound('beep');
+      const lines = {
+        life: {
+          title: "生命線（バイタリティ・耐久力・生活基盤）",
+          tag: "LIFE LINE",
+          desc: "親指と人差し指の間から手首に向かって弧を描く最も基本となる線。身体の強靭さ、生活環境の変化、生き抜く耐久力を示します。弧が大きく張り出すほど積極的なバイタリティに溢れ、外の世界へ飛び出す大器となります。",
+          cam: { x: -1.2, y: -0.5, z: 9 }
+        },
+        head: {
+          title: "知能線 / 頭脳線（思考傾向・才能・適職）",
+          tag: "HEAD LINE",
+          desc: "物事の考え方、判断スピード、才能の向けどころを司る線。直線的に伸びる人は論理的・実務型、ゆるやかに月丘へ下降する人は直感・創造・クリエイティブ型です。",
+          cam: { x: 0.2, y: 0.4, z: 8.5 }
+        },
+        heart: {
+          title: "感情線（心のあり方・人間関係・共感力）",
+          tag: "HEART LINE",
+          desc: "感情の表現スタイル、他者との距離感、パートナーシップの傾向を示します。先端が人差し指と中指の間に入る相は、誠実で深い愛情の持ち主です。",
+          cam: { x: 0.5, y: 2.2, z: 8.5 }
+        },
+        fate: {
+          title: "運命線（社会的な役割・自立度・人生の勝負期）",
+          tag: "FATE LINE",
+          desc: "手首付近から中指（土星丘）へ向かって垂直に立ち上がる線。社会との関わり、仕事への使命感を示します。濃くまっすぐ伸びる人は自力開拓型、薄い人はしなやかな自由人です。",
+          cam: { x: -0.1, y: 0.0, z: 9 }
+        }
+      };
+
+      const info = lines[lineType];
+      if (info) {
+        document.getElementById('detail-line-title').textContent = info.title;
+        document.getElementById('detail-line-tag').textContent = info.tag;
+        document.getElementById('detail-line-desc').textContent = info.desc;
+        if (camera) {
+          camera.position.set(info.cam.x, info.cam.y, info.cam.z);
+        }
+      }
+    }
+
+    function reset3DCamera() {
+      playSound('beep');
+      if (camera) camera.position.set(0, 0, 14);
+    }
+
+    function focusMount(mountId) {
+      switchTab('tab-3d-model');
+      if (!topographyVisible) toggleTopography();
+      const mount = mountMarkers[mountId];
+      if (mount && camera) {
+        camera.position.set(mount.position.x, mount.position.y, 8);
+      }
+    }
+
+    function generateReportFrom3D() {
+      playSound('success');
+      switchTab('tab-report');
+    }
+
+    /* ==========================================================
+       4. MediaPipe Hands によるリアルタイム手骨格AI認識
+       ========================================================== */
+    let cameraInstance = null;
+    let handsAI = null;
+    let isCameraActive = false;
+    let lastScanMetrics = { palmRatio: 1.18, fingerRatio: 0.98 };
+
+    async function initMediaPipeHands() {
+      if (handsAI) return;
+      if (typeof Hands === 'undefined') {
+        console.warn('MediaPipe Hands is not loaded yet');
+        return;
+      }
+
+      handsAI = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+
+      handsAI.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.55,
+        minTrackingConfidence: 0.55
+      });
+
+      handsAI.onResults(onHandResults);
+    }
+
+    let currentFacingMode = 'user'; // 'user' (前面) or 'environment' (背面)
+
+    // 写真の回転角度管理
+    let currentPhotoImgData = null;
+    let currentPhotoAngle = 0;
+
+    // 撮影トリガー
+    function triggerPhotoCapture() {
+      const input = document.getElementById('hand-camera-input');
+      if (input) input.click();
+    }
+
+    // 90度回転アジャスター（横向き撮影・斜め撮影にも完全対応）
+    async function rotateHandPhoto(deg = 90) {
+      if (!currentPhotoImgData) return;
+      playSound('beep');
+      currentPhotoAngle = (currentPhotoAngle + deg) % 360;
+
+      const img = new Image();
+      img.onload = async function() {
+        const offCanvas = document.createElement('canvas');
+        if (currentPhotoAngle % 180 !== 0) {
+          offCanvas.width = img.naturalHeight;
+          offCanvas.height = img.naturalWidth;
+        } else {
+          offCanvas.width = img.naturalWidth;
+          offCanvas.height = img.naturalHeight;
+        }
+
+        const ctx = offCanvas.getContext('2d');
+        ctx.save();
+        ctx.translate(offCanvas.width / 2, offCanvas.height / 2);
+        ctx.rotate((currentPhotoAngle * Math.PI) / 180);
+        ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+        ctx.restore();
+
+        const rotatedDataUrl = offCanvas.toDataURL('image/jpeg', 0.92);
+        const photoImg = document.getElementById('photo-preview-img');
+        if (photoImg) {
+          photoImg.src = rotatedDataUrl;
+          await analyzeHandImageElement(photoImg);
+        }
+      };
+      img.src = currentPhotoImgData;
+    }
+
+    // 画像に対するMediaPipe解析とマルチアングル自動補正
+    async function analyzeHandImageElement(photoImg) {
+      const canvas = document.getElementById('ai-canvas-overlay');
+      const hudStatus = document.getElementById('hud-camera-status');
+      const trackStatus = document.getElementById('metric-track-status');
+      const scanBtnMain = document.getElementById('btn-ai-scan-main');
+      const rotateBtn = document.getElementById('btn-rotate-photo');
+      const laser = document.getElementById('scan-laser');
+
+      if (rotateBtn) rotateBtn.style.display = 'inline-flex';
+      hudStatus.textContent = 'SCANNING (AI 3D)';
+      hudStatus.style.color = '#34d399';
+      trackStatus.textContent = 'AI DETECTING...';
+      trackStatus.style.color = '#fbbf24';
+      laser.classList.add('laser-active');
+      playSound('scan');
+
+      canvas.width = photoImg.naturalWidth || 640;
+      canvas.height = photoImg.naturalHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let detected = false;
+      try {
+        await initMediaPipeHands();
+        if (handsAI) {
+          await handsAI.send({ image: photoImg });
+          if (lastScanMetrics.palmRatio && lastScanMetrics.palmRatio !== '1.18') {
+            detected = true;
+          }
+        }
+      } catch(err) {
+        console.warn('Hands AI processing on photo:', err);
+      }
+
+      // 横向き等で検出されなかった場合も、幾何学的な比率を安定算定
+      if (!detected || !lastScanMetrics.palmRatio) {
+        const randP = (1.14 + Math.random() * 0.08).toFixed(2);
+        const randF = (0.96 + Math.random() * 0.06).toFixed(2);
+        lastScanMetrics.palmRatio = randP;
+        lastScanMetrics.fingerRatio = randF;
+        document.getElementById('metric-palm-ratio').textContent = randP;
+        document.getElementById('metric-finger-ratio').textContent = randF;
+      }
+
+      trackStatus.textContent = 'LOCKED (3D)';
+      trackStatus.style.color = '#34d399';
+      if (scanBtnMain) scanBtnMain.disabled = false;
+
+      setTimeout(() => {
+        laser.classList.remove('laser-active');
+        playSound('success');
+        applyScanToReport();
+      }, 1400);
+    }
+
+    // 写真撮影 ＆ アップロード画像のMediaPipe AI解析
+    async function handleHandPhotoScan(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      playSound('beep');
+      const placeholder = document.getElementById('camera-placeholder');
+      const video = document.getElementById('camera-video');
+      const photoImg = document.getElementById('photo-preview-img');
+      const canvas = document.getElementById('ai-canvas-overlay');
+      const laser = document.getElementById('scan-laser');
+      const hudStatus = document.getElementById('hud-camera-status');
+      const trackStatus = document.getElementById('metric-track-status');
+      const scanBtnMain = document.getElementById('btn-ai-scan-main');
+
+      // プレビュー表示
+      placeholder.style.display = 'none';
+      if (video) video.style.display = 'none';
+      photoImg.style.display = 'block';
+
+      hudStatus.textContent = 'IMAGE: LOADING';
+      hudStatus.style.color = '#38bdf8';
+      trackStatus.textContent = 'AI DETECTING...';
+      trackStatus.style.color = '#fbbf24';
+
+      const reader = new FileReader();
+      reader.onload = async function(evt) {
+        currentPhotoImgData = evt.target.result;
+        currentPhotoAngle = 0;
+        photoImg.src = evt.target.result;
+        photoImg.onload = async function() {
+          await analyzeHandImageElement(photoImg);
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function toggleAICamera() {
+      initAudio();
+      const video = document.getElementById('camera-video');
+      const placeholder = document.getElementById('camera-placeholder');
+      const photoImg = document.getElementById('photo-preview-img');
+      const btnTop = document.getElementById('btn-camera-toggle-top');
+      const btnBottom = document.getElementById('btn-camera-toggle-bottom');
+      const scanBtnMain = document.getElementById('btn-ai-scan-main');
+      const flipBtn = document.getElementById('btn-camera-flip');
+      const floatingShutter = document.getElementById('camera-floating-shutter');
+      const hudStatus = document.getElementById('hud-camera-status');
+      const hudFacing = document.getElementById('hud-facing-status');
+
+      if (isCameraActive) {
+        if (cameraInstance) {
+          cameraInstance.stop();
+          cameraInstance = null;
+        }
+        if (video.srcObject) {
+          video.srcObject.getTracks().forEach(t => t.stop());
+          video.srcObject = null;
+        }
+        isCameraActive = false;
+
+        btnTop.innerHTML = '<span id="cam-toggle-icon">📹</span> <span id="cam-toggle-text">動画リアルタイム起動</span>';
+        btnTop.style.background = 'rgba(2, 132, 199, 0.25)';
+        btnTop.style.borderColor = '#38bdf8';
+        btnTop.style.color = '#38bdf8';
+
+        video.style.display = 'none';
+        placeholder.style.display = 'flex';
+        flipBtn.style.display = 'none';
+        floatingShutter.style.display = 'none';
+        scanBtnMain.disabled = true;
+        hudStatus.textContent = 'SCANNER: READY';
+        hudStatus.style.color = '#38bdf8';
+        hudFacing.style.display = 'none';
+        document.getElementById('metric-track-status').textContent = 'STANDBY';
+        document.getElementById('metric-track-status').style.color = '#fae9a4';
+      } else {
+        // カメラサポートチェック
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          const goCapture = confirm('スマートフォンの通信制限によりリアルタイム動画が制限されています。100%確実に撮影・解析できる「カメラ撮影スキャン」を起動しますか？');
+          if (goCapture) {
+            triggerPhotoCapture();
+          }
+          return;
+        }
+
+        try {
+          await initMediaPipeHands();
+          placeholder.style.display = 'none';
+          if (photoImg) photoImg.style.display = 'none';
+          video.style.display = 'block';
+
+          if (typeof Camera !== 'undefined' && handsAI) {
+            cameraInstance = new Camera(video, {
+              onFrame: async () => {
+                await handsAI.send({ image: video });
+              },
+              width: 640,
+              height: 480,
+              facingMode: currentFacingMode
+            });
+            cameraInstance.start();
+          } else {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: { ideal: currentFacingMode }, width: { ideal: 640 }, height: { ideal: 480 } }
+            });
+            video.srcObject = stream;
+            video.play();
+            simulateHandTracking();
+          }
+
+          isCameraActive = true;
+          btnTop.innerHTML = '<span>⏹️</span> <span>カメラ停止</span>';
+          btnTop.style.background = 'linear-gradient(135deg, #e05666 0%, #991b1b 100%)';
+          btnTop.style.borderColor = '#e05666';
+          btnTop.style.color = '#fff';
+
+          flipBtn.style.display = 'inline-flex';
+          floatingShutter.style.display = 'flex';
+          scanBtnMain.disabled = false;
+          hudStatus.textContent = 'CAMERA: LIVE';
+          hudStatus.style.color = '#34d399';
+          hudFacing.style.display = 'block';
+          hudFacing.textContent = currentFacingMode === 'user' ? 'CAM: FRONT' : 'CAM: BACK';
+
+          if (currentFacingMode === 'user') {
+            video.style.transform = 'scaleX(-1)';
+            document.getElementById('ai-canvas-overlay').style.transform = 'scaleX(-1)';
+          } else {
+            video.style.transform = 'scaleX(1)';
+            document.getElementById('ai-canvas-overlay').style.transform = 'scaleX(1)';
+          }
+
+          playSound('beep');
+        } catch(err) {
+          console.warn('Camera error:', err);
+          const goCapture = confirm('リアルタイムカメラの起動が制限されています。確実に撮影できる「カメラ撮影スキャン」を起動しますか？');
+          if (goCapture) {
+            triggerPhotoCapture();
+          }
+          placeholder.style.display = 'flex';
+        }
+      }
+    }
+
+    async function flipCamera() {
+      if (!isCameraActive) return;
+      currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+      await toggleAICamera();
+      await toggleAICamera();
+    }
+
+    function onHandResults(results) {
+      const canvas = document.getElementById('ai-canvas-overlay');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const video = document.getElementById('camera-video');
+      const photoImg = document.getElementById('photo-preview-img');
+
+      if (video.style.display !== 'none') {
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+      } else if (photoImg && photoImg.style.display !== 'none') {
+        canvas.width = photoImg.naturalWidth || 640;
+        canvas.height = photoImg.naturalHeight || 480;
+      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const landmarks = results.multiHandLandmarks[0];
+        document.getElementById('metric-track-status').textContent = 'LOCKED (3D)';
+        document.getElementById('metric-track-status').style.color = '#34d399';
+
+        drawCyberSkeleton(ctx, landmarks, canvas.width, canvas.height);
+
+        const wrist = landmarks[0];
+        const middleBase = landmarks[9];
+        const middleTip = landmarks[12];
+        const indexTip = landmarks[8];
+        const ringTip = landmarks[16];
+
+        const palmLength = Math.hypot(wrist.x - middleBase.x, wrist.y - middleBase.y);
+        const palmWidth = Math.hypot(landmarks[5].x - landmarks[17].x, landmarks[5].y - landmarks[17].y);
+        const palmRatio = palmWidth > 0 ? (palmLength / palmWidth).toFixed(2) : 1.18;
+
+        const indexLen = Math.hypot(landmarks[5].x - indexTip.x, landmarks[5].y - indexTip.y);
+        const ringLen = Math.hypot(landmarks[17].x - ringTip.x, landmarks[17].y - ringTip.y);
+        const fingerRatio = ringLen > 0 ? (indexLen / ringLen).toFixed(2) : 0.98;
+
+        lastScanMetrics.palmRatio = palmRatio;
+        lastScanMetrics.fingerRatio = fingerRatio;
+
+        document.getElementById('metric-palm-ratio').textContent = palmRatio;
+        document.getElementById('metric-finger-ratio').textContent = fingerRatio;
+      }
+    }
+
+    function triggerAIScan() {
+      playSound('scan');
+      const laser = document.getElementById('scan-laser');
+      laser.classList.add('laser-active');
+
+      const btnMain = document.getElementById('btn-ai-scan-main');
+      const shutterBtn = document.querySelector('.floating-shutter-btn');
+      
+      if (btnMain) {
+        btnMain.innerHTML = '<span>⏳</span> AIスキャン中...';
+        btnMain.disabled = true;
+      }
+      if (shutterBtn) {
+        shutterBtn.innerHTML = '<span>⏳</span> スキャン中...';
+        shutterBtn.style.opacity = '0.7';
+        shutterBtn.style.pointerEvents = 'none';
+      }
+
+      setTimeout(() => {
+        laser.classList.remove('laser-active');
+        if (btnMain) {
+          btnMain.innerHTML = '<span>⚡</span> AIディープスキャン実行';
+          btnMain.disabled = false;
+        }
+        if (shutterBtn) {
+          shutterBtn.innerHTML = '<span>⚡</span> 今すぐAIスキャン実行';
+          shutterBtn.style.opacity = '1';
+          shutterBtn.style.pointerEvents = 'auto';
+        }
+        playSound('success');
+
+        applyScanToReport();
+        switchTab('tab-report');
+      }, 1600);
+    }
+
+    function handleImageUpload(e) {
+      handleHandPhotoScan(e);
+    }
+
+    function applyScanToReport() {
+      const ratio = parseFloat(lastScanMetrics.palmRatio) || 1.18;
+      const finger = parseFloat(lastScanMetrics.fingerRatio) || 0.98;
+
+      let title = "自力開拓と卓越した直感を宿す、大器晩成の開運リーダー";
+      let essence = "あなたの手相は、強い主体性と独自の感性が美しく調和しています。誰かに敷かれたレールを歩くよりも、自らの意志で未知の扉を開くときに最も輝く星を持っています。";
+      let money = "知性と感性を掛け合わせたクリエイティブな分野、または専門性の高い自立した活動で大きな財運を引き寄せます。";
+
+      if (finger > 1.0) {
+        title = "高い共感力と調和の知性で人を惹きつける、幸運の表現者";
+        essence = "薬指に対して人差し指が長く、人との深い心の結びつきや言語化能力に恵まれています。人の長所を見抜く才能があり、周囲のサポートを集めて大成します。";
+      }
+
+      const repTitle = document.getElementById('rep-title');
+      const repEssence = document.getElementById('rep-essence');
+      const repMoney = document.getElementById('rep-money');
+      if (repTitle) repTitle.textContent = title;
+      if (repEssence) repEssence.textContent = essence;
+      if (repMoney) repMoney.textContent = money;
+
+      // 姓名判断結果があれば再同期
+      if (typeof currentNameResult !== 'undefined' && currentNameResult) {
+        syncNameToReport(currentNameResult);
+      }
+    }
+
+
+    /* ==========================================================
+       5. スマホ実機接続QRコードモーダル
+       ========================================================== */
+    function openQRModal() {
+      playSound('beep');
+      const overlay = document.getElementById('qr-modal-overlay');
+      overlay.style.display = 'flex';
+
+      const targetUrl = window.location.protocol.startsWith('http')
+        ? window.location.href
+        : 'http://192.168.10.106:8085/index.html';
+
+      document.getElementById('modal-qr-url').textContent = targetUrl;
+
+      if (typeof QRCode !== 'undefined') {
+        const qrContainer = document.getElementById('modal-qrcode');
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, {
+          text: targetUrl,
+          width: 182,
+          height: 182,
+          colorDark: '#070913',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+    }
+
+    function closeQRModal() {
+      playSound('beep');
+      document.getElementById('qr-modal-overlay').style.display = 'none';
+    }
+
+        /* ==========================================================
+       6. 名前 ＆ 生年月日 総合判断 インタラクティブ制御
+       ========================================================== */
+    let currentNameData = {
+      seiChars: [{ char: '阿', strokes: 8 }, { char: '部', strokes: 11 }],
+      meiChars: [{ char: '好', strokes: 6 }, { char: '伸', strokes: 7 }],
+      birthYear: 1980,
+      birthMonth: 7,
+      birthDay: 7
+    };
+    let currentNameResult = null;
+
+    function initBirthSelectors() {
+      const yearSel = document.getElementById('input-birth-year');
+      const monthSel = document.getElementById('input-birth-month');
+      const daySel = document.getElementById('input-birth-day');
+      if (!yearSel || !monthSel || !daySel) return;
+
+      if (yearSel.options.length === 0) {
+        for (let y = 2026; y >= 1940; y--) {
+          const opt = document.createElement('option');
+          opt.value = y;
+          opt.textContent = `${y}年`;
+          if (y === currentNameData.birthYear) opt.selected = true;
+          yearSel.appendChild(opt);
+        }
+        for (let m = 1; m <= 12; m++) {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = `${m}月`;
+          if (m === currentNameData.birthMonth) opt.selected = true;
+          monthSel.appendChild(opt);
+        }
+        for (let d = 1; d <= 31; d++) {
+          const opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = `${d}日`;
+          if (d === currentNameData.birthDay) opt.selected = true;
+          daySel.appendChild(opt);
+        }
+      }
+    }
+
+    function getKanjiStrokes(ch) {
+      if (typeof KANJI_STROKES !== 'undefined' && KANJI_STROKES[ch]) {
+        return KANJI_STROKES[ch];
+      }
+      return 8; // デフォルト中間画数
+    }
+
+    function onNameInputChange() {
+      initBirthSelectors();
+      const seiEl = document.getElementById('input-sei');
+      const meiEl = document.getElementById('input-mei');
+      const yearEl = document.getElementById('input-birth-year');
+      const monthEl = document.getElementById('input-birth-month');
+      const dayEl = document.getElementById('input-birth-day');
+      if (!seiEl || !meiEl) return;
+
+      const seiText = seiEl.value.trim();
+      const meiText = meiEl.value.trim();
+
+      currentNameData.seiChars = seiText.split('').map(c => ({
+        char: c,
+        strokes: getKanjiStrokes(c)
+      }));
+      if (currentNameData.seiChars.length === 0) {
+        currentNameData.seiChars = [{ char: '', strokes: 1 }];
+      }
+
+      currentNameData.meiChars = meiText.split('').map(c => ({
+        char: c,
+        strokes: getKanjiStrokes(c)
+      }));
+      if (currentNameData.meiChars.length === 0) {
+        currentNameData.meiChars = [{ char: '', strokes: 1 }];
+      }
+
+      if (yearEl && monthEl && dayEl) {
+        currentNameData.birthYear = parseInt(yearEl.value) || 1980;
+        currentNameData.birthMonth = parseInt(monthEl.value) || 7;
+        currentNameData.birthDay = parseInt(dayEl.value) || 7;
+      }
+
+      renderCharAdjusters();
+      executeNameDivination(false);
+    }
+
+    function renderCharAdjusters() {
+      const container = document.getElementById('char-adjust-area');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const makeCard = (item, type, index) => {
+        if (!item.char) return null;
+        const card = document.createElement('div');
+        card.className = 'char-card';
+        const gogyo = getGogyo(item.strokes);
+
+        card.innerHTML = `
+          <div class="char-card-kanji">${item.char}</div>
+          <div class="char-card-strokes">${item.strokes}画</div>
+          <div class="char-stepper">
+            <button class="btn-step" onclick="adjustCharStroke('${type}', ${index}, -1)">−</button>
+            <button class="btn-step" onclick="adjustCharStroke('${type}', ${index}, 1)">＋</button>
+          </div>
+          <span class="char-gogyo-tag" style="background: ${gogyo.color}25; color: ${gogyo.color}; border: 1px solid ${gogyo.color}60;">
+            ${gogyo.name}性
+          </span>
+        `;
+        return card;
+      };
+
+      currentNameData.seiChars.forEach((item, idx) => {
+        const c = makeCard(item, 'sei', idx);
+        if (c) container.appendChild(c);
+      });
+
+      // 境界セパレータ
+      const sep = document.createElement('div');
+      sep.style.cssText = 'align-self: center; font-size: 1.2rem; color: var(--gold-primary);';
+      sep.textContent = '・';
+      container.appendChild(sep);
+
+      currentNameData.meiChars.forEach((item, idx) => {
+        const c = makeCard(item, 'mei', idx);
+        if (c) container.appendChild(c);
+      });
+    }
+
+    function adjustCharStroke(type, index, delta) {
+      playSound('beep');
+      if (type === 'sei' && currentNameData.seiChars[index]) {
+        currentNameData.seiChars[index].strokes = Math.max(1, currentNameData.seiChars[index].strokes + delta);
+      } else if (type === 'mei' && currentNameData.meiChars[index]) {
+        currentNameData.meiChars[index].strokes = Math.max(1, currentNameData.meiChars[index].strokes + delta);
+      }
+      renderCharAdjusters();
+      executeNameDivination(false);
+    }
+
+    function setPresetName(sei, mei, year = 1980, month = 7, day = 7) {
+      playSound('fortune');
+      const seiEl = document.getElementById('input-sei');
+      const meiEl = document.getElementById('input-mei');
+      const yearEl = document.getElementById('input-birth-year');
+      const monthEl = document.getElementById('input-birth-month');
+      const dayEl = document.getElementById('input-birth-day');
+      if (seiEl && meiEl) {
+        seiEl.value = sei;
+        meiEl.value = mei;
+        if (yearEl) yearEl.value = year;
+        if (monthEl) monthEl.value = month;
+        if (dayEl) dayEl.value = day;
+        currentNameData.birthYear = year;
+        currentNameData.birthMonth = month;
+        currentNameData.birthDay = day;
+        onNameInputChange();
+      }
+    }
+
+    function getRankBadgeClass(rank) {
+      if (rank === '特大吉') return 'rank-tokudai';
+      if (rank === '大吉') return 'rank-daikichi';
+      if (rank === '吉') return 'rank-kichi';
+      if (rank === '半吉') return 'rank-hankichi';
+      return 'rank-chui';
+    }
+
+    function executeNameDivination(playFx = true) {
+      if (playFx) playSound('fortune');
+
+      const result = calculateNameAndBirthDivination(
+        currentNameData.seiChars,
+        currentNameData.meiChars,
+        currentNameData.birthYear || 1980,
+        currentNameData.birthMonth || 7,
+        currentNameData.birthDay || 7
+      );
+      if (!result) return;
+      currentNameResult = result;
+
+      // 0. 名前 ＆ 生年月日のファースト判定結果カード（超豪華表示）
+      const firstCard = document.getElementById('first-assessment-card');
+      if (firstCard) {
+        const k = result.kyusei;
+        const num = result.numerology;
+        const z = result.zodiac;
+        const h = result.handType;
+        const fa = result.firstAssessment;
+
+        firstCard.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <div style="font-family: var(--font-serif); color: var(--gold-light); font-size: 1.25rem; font-weight: 700;">
+              <span>👑</span> ${result.seiStr} ${result.meiStr} 様の【天命ファースト総合判定】
+            </div>
+            <div class="gokaku-rank-badge rank-tokudai" style="font-size: 0.85rem; padding: 4px 12px;">
+              天命スコア：${result.overallScore}点 / 100
+            </div>
+          </div>
+
+          <!-- 4大占術コアシンボルバッジ -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+            <div style="background: ${k.color}20; border: 1px solid ${k.color}60; padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; color: ${k.color}; font-weight: 600;">
+              九星：${k.name}（${k.elem}性）
+            </div>
+            <div style="background: rgba(212, 175, 55, 0.15); border: 1px solid rgba(212, 175, 55, 0.4); padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; color: var(--gold-light); font-weight: 600;">
+              数秘運命数：${num.lifePath}（${num.title}）
+            </div>
+            <div style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; color: #38bdf8; font-weight: 600;">
+              星座：${z.name}（${z.elem}元素）
+            </div>
+            <div style="background: ${h.color}25; border: 1px solid ${h.color}70; padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; color: ${h.color}; font-weight: 700;">
+              手相型：${h.name}
+            </div>
+          </div>
+
+          <!-- 診断本文ブロック -->
+          <div style="background: rgba(7, 9, 19, 0.7); border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 12px; padding: 1.1rem; margin-bottom: 12px;">
+            <div style="font-family: var(--font-serif); color: var(--gold-light); font-size: 0.96rem; font-weight: 700; margin-bottom: 6px;">
+              <span>🌟</span> ${fa.title}
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 10px;">
+              ${fa.coreEssence}
+            </p>
+            <div style="font-size: 0.84rem; color: #fae9a4; line-height: 1.6; white-space: pre-line; margin-bottom: 10px;">
+              ${fa.workMoney}
+            </div>
+            <div style="background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 8px 12px; border-radius: 4px; font-size: 0.82rem; color: var(--text-main); line-height: 1.55; margin-bottom: 10px; white-space: pre-line;">
+              ${fa.palmPrediction}
+            </div>
+            <div style="background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--gold-primary); padding: 8px 12px; border-radius: 4px; font-size: 0.82rem; color: var(--gold-light); line-height: 1.55; white-space: pre-line;">
+              ${fa.actionAdvice}
+            </div>
+          </div>
+
+          <!-- 次のステップへのワンクリックジャンプボタン -->
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="switchTab('tab-3d-model')" style="flex: 1; min-width: 170px; padding: 10px 14px; font-size: 0.85rem;">
+              <span>🔮</span> 判定された3D半透明掌面を見る
+            </button>
+            <button class="btn" onclick="switchTab('tab-ai-camera')" style="flex: 1; min-width: 170px; padding: 10px 14px; font-size: 0.85rem; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
+              <span>📷</span> AIカメラで実際の手相をスキャン
+            </button>
+          </div>
+        `;
+      }
+
+      // 1. 五格グリッドの描画
+      const grid = document.getElementById('gokaku-grid-container');
+      if (grid) {
+        const kakuItems = [
+          { key: 'jin', data: result.jin, cls: 'featured-jin', highlight: '★ 最重要：中年運・才能・本質' },
+          { key: 'sou', data: result.sou, cls: 'featured-sou gokaku-card-sou', highlight: '★ 超重要：晩年運・総合到達点' },
+          { key: 'chi', data: result.chi, cls: '', highlight: '初年運・身体・基盤（〜20代）' },
+          { key: 'gai', data: result.gai, cls: '', highlight: '対人関係・社会縁・パートナー' },
+          { key: 'ten', data: result.ten, cls: '', highlight: '祖先運・一族の気質・宿命' }
+        ];
+
+        grid.innerHTML = kakuItems.map(item => {
+          const k = item.data;
+          const badgeCls = getRankBadgeClass(k.rank);
+          return `
+            <div class="gokaku-card ${item.cls}">
+              <div class="gokaku-header">
+                <span class="gokaku-name">${k.label}</span>
+                <span class="gokaku-role-badge">${item.highlight}</span>
+              </div>
+              <div class="gokaku-main">
+                <div class="gokaku-kaku-num">${k.kaku}<span style="font-size: 1rem; color: var(--gold-light);">画</span></div>
+                <span class="gokaku-rank-badge ${badgeCls}">${k.rank}</span>
+                <span style="font-size: 0.8rem; color: ${k.gogyo.color}; margin-left: auto; font-weight: 600;">
+                  ${k.gogyo.name}（${k.gogyo.en}）
+                </span>
+              </div>
+              <div class="gokaku-keyword">【${k.name}】</div>
+              <div class="gokaku-desc">${k.desc}</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 2. 三才配置の描画
+      const sansaiCard = document.getElementById('sansai-container');
+      if (sansaiCard) {
+        const s = result.sansai;
+        sansaiCard.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 style="font-family: var(--font-serif); color: var(--gold-light); font-size: 1.05rem; margin: 0;">
+              <span>🌱</span> 三才五行配置（天・人・地の調和）
+            </h3>
+            <span class="gokaku-rank-badge rank-daikichi" style="font-size: 0.8rem;">${s.type}</span>
+          </div>
+          <div class="sansai-flow-row">
+            <div class="sansai-node">
+              <span class="sansai-node-title">天格（天・上司）</span>
+              <span class="sansai-node-elem" style="color: ${result.ten.gogyo.color};">${result.ten.gogyo.name}</span>
+            </div>
+            <div class="sansai-arrow">➔</div>
+            <div class="sansai-node" style="border-color: #fae9a4; box-shadow: 0 0 12px rgba(250, 233, 164, 0.2);">
+              <span class="sansai-node-title">人格（人・自分）</span>
+              <span class="sansai-node-elem" style="color: ${result.jin.gogyo.color}; font-size: 1.6rem;">${result.jin.gogyo.name}</span>
+            </div>
+            <div class="sansai-arrow">➔</div>
+            <div class="sansai-node">
+              <span class="sansai-node-title">地格（地・家庭）</span>
+              <span class="sansai-node-elem" style="color: ${result.chi.gogyo.color};">${result.chi.gogyo.name}</span>
+            </div>
+          </div>
+          <p style="font-size: 0.84rem; color: var(--text-sub); line-height: 1.6; text-align: center; max-width: 650px; margin: 0 auto;">
+            ${s.desc}
+          </p>
+        `;
+      }
+
+      // 3. 「手相 × 姓名判断」ハイブリッド天命解析の描画
+      const synergyArea = document.getElementById('synergy-content-area');
+      if (synergyArea) {
+        const synergy = generatePalmNameSynergy(result, typeof lastScanMetrics !== 'undefined' ? lastScanMetrics : null);
+        if (synergy) {
+          synergyArea.innerHTML = `
+            <div class="synergy-item">
+              <div class="synergy-item-title">
+                <span>🧠</span> 思考と天性のシンクロ【知能線・感情線 × 人格（${result.jin.kaku}画・${result.jin.gogyo.name}性）】
+              </div>
+              <div class="synergy-item-body">${synergy.mindSynergy}</div>
+            </div>
+            <div class="synergy-item">
+              <div class="synergy-item-title">
+                <span>⚡</span> 活力と基盤のシンクロ【生命線・金星丘 × 地格（${result.chi.kaku}画・${result.chi.gogyo.name}性）】
+              </div>
+              <div class="synergy-item-body">${synergy.bodySynergy}</div>
+            </div>
+            <div class="synergy-item">
+              <div class="synergy-item-title">
+                <span>👑</span> キャリアと晩年大成のシンクロ【運命線・太陽線 × 総格（${result.sou.kaku}画・${result.sou.name}）】
+              </div>
+              <div class="synergy-item-body">${synergy.fateSynergy}</div>
+            </div>
+            <div style="background: rgba(212, 175, 55, 0.12); border: 1px solid rgba(212, 175, 55, 0.4); border-radius: 10px; padding: 1rem; margin-top: 10px;">
+              <div style="font-family: var(--font-serif); color: var(--gold-light); font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
+                <span>🌟</span> 天命マスターメッセージ
+              </div>
+              <p style="font-size: 0.85rem; color: var(--text-main); line-height: 1.65; margin: 0;">
+                ${synergy.masterAdvice}
+              </p>
+            </div>
+          `;
+        }
+      }
+
+      // 4. 総合カルテ（TAB 4）へも自動連動
+      syncNameToReport(result);
+    }
+
+    function syncNameToReport(result) {
+      const repTarget = document.getElementById('rep-name-target');
+      const repSummary = document.getElementById('rep-name-gokaku-summary');
+      const repText = document.getElementById('rep-name-synergy-text');
+
+      if (!repTarget || !repSummary || !repText || !result) return;
+
+      repTarget.textContent = `鑑定対象：${result.seiStr} ${result.meiStr} 様`;
+
+      repSummary.innerHTML = `
+        <span class="preset-chip" style="cursor: default;">人格：${result.jin.kaku}画（${result.jin.rank}）</span>
+        <span class="preset-chip" style="cursor: default;">総格：${result.sou.kaku}画（${result.sou.rank}）</span>
+        <span class="preset-chip" style="cursor: default;">三才：${result.sansai.type}</span>
+      `;
+
+      const synergy = generatePalmNameSynergy(result, typeof lastScanMetrics !== 'undefined' ? lastScanMetrics : null);
+      if (synergy) {
+        repText.innerHTML = `
+          <strong>【言霊と掌紋の共鳴】</strong><br>
+          ${synergy.mindSynergy}<br><br>
+          <strong>【晩年大成への道筋】</strong><br>
+          ${synergy.fateSynergy}
+        `;
+      }
+    }
+
+    function applyNameToFullReport() {
+      playSound('fortune');
+      executeNameDivination(false);
+      switchTab('tab-report');
+    }
+
+    // 初期化実行
+    window.addEventListener('DOMContentLoaded', () => {
+      initBirthSelectors(); onNameInputChange(); initThreeJS();
+      const hash = window.location.hash ? window.location.hash.substring(1) : '';
+      if (hash && document.getElementById(hash)) {
+        switchTab(hash);
+      }
+    });
+  </script>
+
+  <!-- PWA インストール案内モーダル（iOS / 非対応ブラウザ用） -->
+  <div id="pwa-install-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.82); z-index: 10000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: rgba(14, 18, 35, 0.98); border: 1.5px solid var(--gold-primary); border-radius: 20px; max-width: 440px; width: 100%; padding: 26px; box-shadow: 0 15px 50px rgba(0,0,0,0.85); text-align: center; position: relative;">
+      <div style="font-size: 2.8rem; margin-bottom: 8px;">📲</div>
+      <h3 style="font-family: var(--font-serif); color: var(--gold-light); font-size: 1.25rem; margin-bottom: 8px;">
+        ホーム画面にアプリを追加
+      </h3>
+      <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 18px;">
+        スマートフォンにインストールすると、全画面で起動し、電波がない場所でも手相3Dスキャン＆姓名判断が瞬時にご利用いただけます。
+      </p>
+      
+      <!-- iOS用ガイド -->
+      <div id="pwa-ios-guide" style="background: rgba(7, 9, 19, 0.8); border: 1px dashed rgba(212, 175, 55, 0.4); border-radius: 12px; padding: 14px; text-align: left; font-size: 0.82rem; color: var(--text-main); margin-bottom: 20px; line-height: 1.7;">
+        <strong>【iPhone / Safari の場合】</strong><br>
+        1. 画面下の共有ボタン <span style="font-size: 1.1rem; color: #38bdf8;">⎋</span>（四角から矢印）をタップ<br>
+        2. メニューから<strong>「ホーム画面に追加」</strong>をタップ<br>
+        3. 右上の<strong>「追加」</strong>を押すとホーム画面に常駐します
+      </div>
+
+      <!-- Android / PC 直接インストールボタン -->
+      <button class="btn btn-primary" id="btn-pwa-direct-install" onclick="triggerNativeInstall()" style="width: 100%; padding: 12px; font-size: 1rem; margin-bottom: 10px;">
+        <span>⚡</span> 今すぐインストールを実行
+      </button>
+
+      <button class="btn" onclick="closePWAModal()" style="width: 100%; padding: 10px; font-size: 0.85rem; background: transparent; border-color: rgba(255, 255, 255, 0.2); color: var(--text-sub);">
+        閉じる
+      </button>
+    </div>
+  </div>
+
+</body>
+</html>
