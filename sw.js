@@ -2,15 +2,16 @@
 // Service Worker for 大人の本格手相＆姓名判断ナビ 3D (PWA)
 // ============================================================
 
-const CACHE_NAME = 'teso-navi-cache-v2.4';
+const CACHE_NAME = 'teso-navi-cache-v3.0';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './favicon.ico',
+  './favicon.png',
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
-  './favicon.png',
   './screenshot-mobile.png',
   './kanji_strokes.js',
   './name_divination.js',
