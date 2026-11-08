@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スマホ実機で開く ｜ 大人の本格手相 ＆ 姓名判断ナビ 3D</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #070913;
+      background-image: 
+        radial-gradient(circle at 50% 10%, rgba(38, 48, 92, 0.6) 0%, transparent 60%),
+        radial-gradient(circle at 10% 90%, rgba(85, 25, 45, 0.4) 0%, transparent 50%);
+      color: #f5f4f0;
+      font-family: 'Noto Sans JP', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .card {
+      background: rgba(14, 18, 35, 0.9);
+      border: 1.5px solid #d4af37;
+      border-radius: 20px;
+      padding: 34px 28px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.85), inset 0 0 20px rgba(212, 175, 55, 0.1);
+      position: relative;
+    }
+    .badge {
+      display: inline-block;
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      color: #fae9a4;
+      background: rgba(212, 175, 55, 0.15);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-family: 'Shippori Mincho', serif;
+      color: #fae9a4;
+      font-size: 1.45rem;
+      margin-top: 0;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    p {
+      color: #a7a5b6;
+      font-size: 0.86rem;
+      line-height: 1.55;
+      margin-bottom: 22px;
+    }
+    #qrcode {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      background: #ffffff;
+      border-radius: 14px;
+      width: 230px;
+      height: 230px;
+      margin: 0 auto 20px;
+      box-sizing: border-box;
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.35);
+    }
+    #qrcode img {
+      display: block;
+      width: 198px !important;
+      height: 198px !important;
+    }
+    .url-box {
+      background: rgba(0,0,0,0.55);
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px dashed rgba(212, 175, 55, 0.45);
+      font-family: monospace;
+      font-size: 1rem;
+      color: #fae9a4;
+      word-break: break-all;
+      margin-bottom: 22px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #fae9a4 0%, #d4af37 50%, #9a781b 100%);
+      color: #070913;
+      text-decoration: none;
+      font-weight: 700;
+      border-radius: 8px;
+      box-shadow: 0 4px 18px rgba(212, 175, 55, 0.4);
+      font-size: 0.95rem;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(212, 175, 55, 0.6);
+      color: #000;
+    }
+    .note {
+      font-size: 0.76rem;
+      color: #6b687c;
+      margin-top: 18px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">PALMISTRY × NAME NUMEROLOGY 3D</div>
+    <h1>📱 スマホ実機で開く</h1>
+    <p>同じWi-Fiに接続したスマートフォンのカメラで、下のQRコードを読み取ってください。<br>（手相3Dスキャン＆本格姓名判断ハイブリッドアプリが起動します）</p>
+    
+    <div id="qrcode"></div>
+    <div class="url-box">http://192.168.10.106:8085/index.html</div>
+    
+    <a href="http://192.168.10.106:8085/index.html" target="_blank" class="btn">💻 このPCブラウザで直接開く</a>
+    
+    <div class="note">
+      ※スマートフォンとPCが同じWi-Fiネットワークに接続されている必要があります。<br>
+      ※終了するには、黒いコマンド画面（ターミナル）を閉じるか Ctrl+C を押してください。
+    </div>
+  </div>
+
+  <script>
+    try {
+      new QRCode(document.getElementById("qrcode"), {
+        text: "http://192.168.10.106:8085/index.html",
+        width: 198,
+        height: 198,
+        colorDark : "#070913",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.M
+      });
+    } catch(e) {
+      document.getElementById("qrcode").innerHTML = '<img src="qrcode_mobile.png" alt="QRコード" style="width:198px;height:198px;">';
+    }
+  </script>
+</body>
+</html>
