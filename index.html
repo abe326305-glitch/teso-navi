@@ -10,9 +10,9 @@
   <meta name="apple-mobile-web-app-title" content="本格手相ナビ3D">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="application-name" content="手相姓名ナビ">
   <!-- Google Fonts -->
@@ -3154,6 +3154,85 @@
         switchTab(hash);
       }
     });
+  
+    // ============================================================
+    // PWA Service Worker 登録 & インストールハンドラー
+    // ============================================================
+    let deferredPrompt = null;
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          console.log('[PWA] Service Worker registered successfully:', reg.scope);
+        }).catch((err) => {
+          console.warn('[PWA] Service Worker registration failed:', err);
+        });
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log('[PWA] beforeinstallprompt captured');
+      const pwaBtn = document.getElementById('btn-pwa-install');
+      if (pwaBtn) {
+        pwaBtn.style.boxShadow = '0 0 16px rgba(212, 175, 55, 0.8)';
+      }
+      const directBtn = document.getElementById('btn-pwa-direct-install');
+      if (directBtn) {
+        directBtn.style.display = 'block';
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      console.log('[PWA] App successfully installed');
+      deferredPrompt = null;
+      closePWAModal();
+      const pwaBtn = document.getElementById('btn-pwa-install');
+      if (pwaBtn) {
+        pwaBtn.innerHTML = '<span>✅</span> アプリ保存済み';
+      }
+    });
+
+    function promptInstallPWA() {
+      playSound('tap');
+      if (deferredPrompt) {
+        triggerNativeInstall();
+      } else {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const iosGuide = document.getElementById('pwa-ios-guide');
+        const directBtn = document.getElementById('btn-pwa-direct-install');
+        if (iosGuide && directBtn) {
+          if (isIOS) {
+            iosGuide.style.display = 'block';
+            directBtn.style.display = 'none';
+          } else {
+            iosGuide.style.display = 'none';
+            directBtn.style.display = 'block';
+          }
+        }
+        const modal = document.getElementById('pwa-install-modal');
+        if (modal) modal.style.display = 'flex';
+      }
+    }
+
+    async function triggerNativeInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        console.log('[PWA] User choice:', choiceResult.outcome);
+        deferredPrompt = null;
+        closePWAModal();
+      } else {
+        alert('【インストール方法】\n\nブラウザの右上メニュー「︙」をタップし、\n「アプリをインストール」または「ホーム画面に追加」を選択してください。\n\n※ すでにホーム画面に追加済みの場合は、ホーム画面のアイコンから起動してください。');
+      }
+    }
+
+    function closePWAModal() {
+      const modal = document.getElementById('pwa-install-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
   </script>
 
   <!-- PWA インストール案内モーダル（iOS / 非対応ブラウザ用） -->
