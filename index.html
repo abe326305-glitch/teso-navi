@@ -2778,7 +2778,7 @@
        5. スマホ実機接続QRコードモーダル
        ========================================================== */
     function openQRModal() {
-      playSound('beep');
+      try { playSound('beep'); } catch (e) {}
       const overlay = document.getElementById('qr-modal-overlay');
       overlay.style.display = 'flex';
 
@@ -2788,18 +2788,26 @@
 
       document.getElementById('modal-qr-url').textContent = targetUrl;
 
-      if (typeof QRCode !== 'undefined') {
-        const qrContainer = document.getElementById('modal-qrcode');
+      const qrContainer = document.getElementById('modal-qrcode');
+      qrContainer.innerHTML = '';
+      const showFallback = () => {
         qrContainer.innerHTML = '';
-        new QRCode(qrContainer, {
-          text: targetUrl,
-          width: 182,
-          height: 182,
-          colorDark: '#070913',
-          colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.M
-        });
-      }
+        const img = document.createElement('img');
+        img.alt = 'QRコード';
+        img.style.cssText = 'width:182px;height:182px;display:block;';
+        const pub = 'https://abe326305-glitch.github.io/teso-navi/';
+        const isPub = targetUrl.replace(/index\.html$/, '') === pub;
+        const web = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=' + encodeURIComponent(targetUrl);
+        img.src = isPub ? 'qrcode_mobile.png' : web;
+        img.onerror = () => { img.onerror = null; img.src = web; };
+        qrContainer.appendChild(img);
+      };
+      try {
+        if (typeof QRCode !== 'undefined') {
+          new QRCode(qrContainer, { text: targetUrl, width: 182, height: 182, colorDark: '#070913', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        }
+      } catch (e) { console.warn('QR lib error', e); }
+      setTimeout(() => { if (!qrContainer.querySelector('canvas, img')) showFallback(); }, 250);
     }
 
     function closeQRModal() {
