@@ -205,7 +205,7 @@
       background: rgba(11, 14, 28, 0.98);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       position: sticky;
-      top: 73px;
+      top: var(--header-h, 73px);
       z-index: 90;
       overflow-x: auto;
       scrollbar-width: none;
@@ -664,12 +664,22 @@
       transform: scale(0.95);
     }
 
+    @media print {
+      body * { visibility: hidden !important; }
+      #printable-report, #printable-report * { visibility: visible !important; }
+      #printable-report { position: absolute; left: 0; top: 0; width: 100%; }
+      .btn-row { display: none !important; }
+    }
+    .save-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: rgba(14,18,35,.96); color: #fae9a4; border: 1px solid #d4af37; padding: 10px 16px; border-radius: 12px; font-size: .85rem; z-index: 20000; max-width: 90vw; text-align: center; }
+
     /* スマホ最適化メディアクエリ */
     @media (max-width: 600px) {
       header { padding: 0.65rem 0.8rem 0.4rem; }
       header h1 { font-size: 1.15rem; }
       .badge-sub { font-size: 0.66rem; padding: 2px 8px; }
-      .tab-bar { top: 62px; }
+      .header-top { flex-wrap: wrap; gap: 6px; justify-content: center; }
+      .sound-btn { font-size: 0.72rem; padding: 4px 8px; }
+      header p { font-size: 0.66rem; }
       .tab-btn { min-width: 96px; padding: 0.55rem 0.35rem; font-size: 0.72rem; }
       main { padding: 0.7rem 0.5rem 2.5rem; }
       .card { padding: 0.85rem; margin-bottom: 0.8rem; }
@@ -1740,8 +1750,14 @@
 
       <!-- アクションボタン -->
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="window.print()">
-          <span>🖨️</span> カルテを印刷・PDF保存
+        <button class="btn btn-primary" onclick="saveReportImage()">
+          <span>💾</span> カルテを画像で保存
+        </button>
+        <button class="btn" onclick="copyReportText()">
+          <span>📋</span> テキストをコピー
+        </button>
+        <button class="btn" onclick="window.print()">
+          <span>🖨️</span> 印刷・PDF
         </button>
         <button class="btn" onclick="switchTab('tab-3d-model')">
           <span>🔮</span> 3D掌面に戻る
@@ -1800,17 +1816,14 @@
       <div style="font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 2px; color: #fae9a4; background: rgba(212, 175, 55, 0.15); border: 1px solid rgba(212, 175, 55, 0.4); padding: 3px 12px; border-radius: 20px; display: inline-block; margin-bottom: 10px;">MOBILE CONNECT</div>
       <h3 style="font-family: 'Shippori Mincho', serif; font-size: 1.3rem; color: #fae9a4; margin-bottom: 8px;">📱 スマホ実機で開く</h3>
       <p style="font-size: 0.84rem; color: #a7a5b6; line-height: 1.5; margin-bottom: 18px;">
-        同一Wi-Fiに接続したスマートフォンのカメラで下のQRコードを読み取ると、お手元のスマホで直接操作・スキャンできます。
+        スマートフォンのカメラで下のQRコードを読み取ると、このアプリをスマホで直接開けます。
       </p>
       <div id="modal-qrcode" style="display: flex; justify-content: center; align-items: center; background: #fff; padding: 14px; border-radius: 12px; width: 210px; height: 210px; margin: 0 auto 16px; box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);">
-        <img src="qrcode_mobile.png" alt="QRコード" style="width: 182px; height: 182px; display: block;">
+
       </div>
       <div id="modal-qr-url" style="background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.88rem; color: #fae9a4; word-break: break-all; margin-bottom: 16px; border: 1px dashed rgba(212, 175, 55, 0.35);">
-        http://192.168.10.106:8085/index.html
-      </div>
-      <p style="font-size: 0.74rem; color: #6b687c; margin-bottom: 0;">
-        ※「【スマホ実機で開く(QRコード表示)】.bat」を起動しておくとスムーズに接続できます。
-      </p>
+        </div>
+
     </div>
   </div>
 
@@ -2770,8 +2783,8 @@
       overlay.style.display = 'flex';
 
       const targetUrl = window.location.protocol.startsWith('http')
-        ? window.location.href
-        : 'http://192.168.10.106:8085/index.html';
+        ? window.location.href.split('#')[0]
+        : 'https://abe326305-glitch.github.io/teso-navi/';
 
       document.getElementById('modal-qr-url').textContent = targetUrl;
 
@@ -3276,6 +3289,105 @@
 
       modal.style.display = 'flex';
     }
+
+
+    /* ==========================================================
+       カルテ保存（スマホ対応：画像保存／共有／テキストコピー）
+       ========================================================== */
+    function showSaveToast(msg) {
+      const t = document.createElement('div');
+      t.className = 'save-toast';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3200);
+    }
+    function _t(id) { const e = document.getElementById(id); return e ? e.textContent.replace(/\s+/g, ' ').trim() : ''; }
+    function buildReportText() {
+      const L = [];
+      L.push('【大人の本格手相＆姓名判断ナビ 3D 鑑定カルテ】');
+      L.push(_t('rep-title')); L.push(_t('rep-badge')); L.push('');
+      L.push('バイタリティ ' + _t('score-life') + ' / 知性 ' + _t('score-head') + ' / 人間力 ' + _t('score-heart') + ' / 金運 ' + _t('score-fate')); L.push('');
+      [['1. 本質と天命','rep-essence'],['2. 才能と金運','rep-money'],['3. 転機と開運タイミング','rep-timing'],['4. 9つの丘からの提言','rep-mount-advice']].forEach(([h,id]) => { L.push('■' + h); L.push(_t(id)); L.push(''); });
+      const nm = _t('rep-name-synergy-text');
+      if (nm) { L.push('■姓名判断 ' + _t('rep-name-target')); L.push(nm); L.push(''); }
+      L.push('■開運アクション'); L.push(_t('rep-action'));
+      return L.join('\n');
+    }
+    async function copyReportText() {
+      playSound('tap');
+      const text = buildReportText();
+      try {
+        if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); }
+        else { const ta = document.createElement('textarea'); ta.value = text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+        showSaveToast('✅ カルテをコピーしました。メモ等に貼り付けて保存できます');
+      } catch (e) { showSaveToast('コピーに失敗しました。画像保存をお試しください'); }
+    }
+    function _wrapLines(ctx, text, maxW) {
+      const out = []; let line = '';
+      for (const ch of text) {
+        if (ctx.measureText(line + ch).width > maxW) { out.push(line); line = ch; } else { line += ch; }
+      }
+      if (line) out.push(line);
+      return out;
+    }
+    async function saveReportImage() {
+      playSound('tap');
+      try {
+        const W = 900, pad = 48, maxW = W - pad * 2;
+        const sections = [];
+        sections.push({h: _t('rep-title'), b: _t('rep-badge'), big: true});
+        sections.push({h: 'スコア', b: 'バイタリティ ' + _t('score-life') + '　知性 ' + _t('score-head') + '　人間力 ' + _t('score-heart') + '　金運 ' + _t('score-fate')});
+        [['1. 本質と天命','rep-essence'],['2. 才能と金運','rep-money'],['3. 転機と開運タイミング','rep-timing'],['4. 9つの丘からの提言','rep-mount-advice']].forEach(([h,id]) => sections.push({h, b: _t(id)}));
+        const nm = _t('rep-name-synergy-text');
+        if (nm) sections.push({h: '姓名判断 ' + _t('rep-name-target'), b: nm});
+        sections.push({h: '開運アクション', b: _t('rep-action')});
+        const c = document.createElement('canvas'); const m = c.getContext('2d');
+        const font = (sz, w) => `${w||400} ${sz}px "Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif`;
+        // 高さ計算
+        let y = pad + 30;
+        sections.forEach(sec => {
+          m.font = font(sec.big ? 34 : 26, 700); y += _wrapLines(m, sec.h, maxW).length * (sec.big ? 46 : 36);
+          m.font = font(22); y += _wrapLines(m, sec.b, maxW).length * 34 + 22;
+        });
+        y += 60;
+        c.width = W; c.height = y;
+        const g = c.getContext('2d');
+        g.fillStyle = '#070913'; g.fillRect(0, 0, W, y);
+        g.strokeStyle = '#d4af37'; g.lineWidth = 3; g.strokeRect(14, 14, W - 28, y - 28);
+        g.textBaseline = 'top'; let cy = pad + 30;
+        sections.forEach(sec => {
+          g.font = font(sec.big ? 34 : 26, 700); g.fillStyle = '#fae9a4';
+          _wrapLines(g, sec.h, maxW).forEach(l => { g.fillText(l, pad, cy); cy += sec.big ? 46 : 36; });
+          g.font = font(22); g.fillStyle = '#f5f4f0';
+          _wrapLines(g, sec.b, maxW).forEach(l => { g.fillText(l, pad, cy); cy += 34; });
+          cy += 22;
+        });
+        g.font = font(18); g.fillStyle = '#a7a5b6'; g.fillText('大人の本格手相＆姓名判断ナビ 3D', pad, y - 50);
+        const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+        if (!blob) throw new Error('blob');
+        const file = new File([blob], 'teso-karte.png', {type: 'image/png'});
+        if (navigator.canShare && navigator.canShare({files: [file]})) {
+          try { await navigator.share({files: [file], title: '手相カルテ'}); showSaveToast('✅ 共有メニューから「画像を保存」を選べます'); return; }
+          catch (e) { if (e && e.name === 'AbortError') return; }
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'teso-karte.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        showSaveToast('✅ 画像を保存しました（ダウンロードフォルダ）');
+      } catch (e) {
+        console.warn(e); showSaveToast('画像保存に失敗しました。「テキストをコピー」をお試しください');
+      }
+    }
+
+    /* ヘッダー高さに合わせてタブバー位置を調整 */
+    (function () {
+      const hd = document.querySelector('header');
+      if (!hd) return;
+      const upd = () => document.documentElement.style.setProperty('--header-h', hd.offsetHeight + 'px');
+      upd(); window.addEventListener('resize', upd); window.addEventListener('load', upd);
+      if (window.ResizeObserver) new ResizeObserver(upd).observe(hd);
+    })();
 
     function closePWAModal() {
       const modal = document.getElementById('pwa-install-modal');
