@@ -1446,6 +1446,9 @@
             <button class="hud-btn active" id="btn-toggle-timeline" onclick="toggleTimeline()">
               <span>⏳</span> 流年法 3D年齢ピン
             </button>
+            <button class="hud-btn" id="btn-toggle-scan-overlay" onclick="toggle3DScanOverlay()" style="display: none;">
+              <span>📷</span> スキャン重畳
+            </button>
             <button class="hud-btn" onclick="focusCameraOn('life')">
               <span>❤️</span> 生命線
             </button>
@@ -1566,24 +1569,38 @@
 
         <!-- スキャン画像スタイル切替バー（写真読み込み後に表示） -->
         <div class="scan-filter-bar" id="scan-filter-bar">
-          <button class="scan-filter-btn active" data-mode="enhanced" onclick="setScanFilterMode('enhanced', this)">✨ 掌紋くっきり＋AI解析</button>
+          <button class="scan-filter-btn active" data-mode="enhanced" onclick="setScanFilterMode('enhanced', this)">✨ 掌紋くっきり＋線解説</button>
           <button class="scan-filter-btn" data-mode="gold_relief" onclick="setScanFilterMode('gold_relief', this)">🔍 シワ強調（金泥プロ版）</button>
-          <button class="scan-filter-btn" data-mode="mounts_map" onclick="setScanFilterMode('mounts_map', this)">🌌 9つの丘＆4大線マップ</button>
+          <button class="scan-filter-btn" data-mode="mounts_map" onclick="setScanFilterMode('mounts_map', this)">🌌 9つの丘＆全線ガイド</button>
           <button class="scan-filter-btn" data-mode="original" onclick="setScanFilterMode('original', this)">📷 オリジナル＋骨格のみ</button>
+        </div>
+
+        <!-- 特定の線だけ強調表示するチップバー -->
+        <div class="scan-filter-bar" id="scan-line-toggles" style="margin-top: 0.45rem; gap: 5px; padding: 0.45rem;">
+          <button class="scan-filter-btn active" data-line="all" onclick="setScanFocusLine('all', this)" style="flex: 1 1 auto; font-size: 0.72rem; padding: 0.4rem 0.5rem;">👁️ 全線表示</button>
+          <button class="scan-filter-btn" data-line="life" onclick="setScanFocusLine('life', this)" style="flex: 1 1 auto; font-size: 0.72rem; padding: 0.4rem 0.5rem;">❤️ 生命線</button>
+          <button class="scan-filter-btn" data-line="head" onclick="setScanFocusLine('head', this)" style="flex: 1 1 auto; font-size: 0.72rem; padding: 0.4rem 0.5rem;">🧠 知能線</button>
+          <button class="scan-filter-btn" data-line="heart" onclick="setScanFocusLine('heart', this)" style="flex: 1 1 auto; font-size: 0.72rem; padding: 0.4rem 0.5rem;">💖 感情線</button>
+          <button class="scan-filter-btn" data-line="fate" onclick="setScanFocusLine('fate', this)" style="flex: 1 1 auto; font-size: 0.72rem; padding: 0.4rem 0.5rem;">🌟 運命線</button>
+          <button class="scan-filter-btn" data-line="sun" onclick="setScanFocusLine('sun', this)" style="flex: 1 1 auto; font-size: 0.72rem; padding: 0.4rem 0.5rem;">☀️ 太陽線</button>
+          <button class="scan-filter-btn" data-line="money" onclick="setScanFocusLine('money', this)" style="flex: 1 1 auto; font-size: 0.72rem; padding: 0.4rem 0.5rem;">💰 財運線</button>
         </div>
 
         <!-- カメラ直下のボタングループ -->
         <div class="btn-row" style="margin-top: 0.85rem; gap: 8px; flex-wrap: wrap;">
-          <button class="btn btn-primary" id="btn-ai-scan-main" onclick="triggerAIScan()" disabled style="flex: 1.4; min-width: 170px; font-size: 0.92rem; padding: 0.85rem 0.6rem;">
+          <button class="btn btn-primary" id="btn-ai-scan-main" onclick="triggerAIScan()" disabled style="flex: 1.3; min-width: 150px; font-size: 0.9rem; padding: 0.85rem 0.5rem;">
             <span>⚡</span> 総合カルテへ反映
           </button>
-          <button class="btn btn-cyan" id="btn-save-scan-img" onclick="saveScanImage()" style="display: none; flex: 1; min-width: 120px; font-size: 0.84rem; padding: 0.85rem 0.4rem; background: rgba(52, 211, 153, 0.14); border-color: #34d399; color: #34d399;">
-            <span>💾</span> スキャン画像保存
+          <button class="btn btn-cyan" id="btn-view-in-3d" onclick="openScanIn3D()" style="display: none; flex: 1.2; min-width: 140px; font-size: 0.84rem; padding: 0.85rem 0.45rem; background: rgba(168, 85, 247, 0.22); border-color: #c084fc; color: #e9d5ff;">
+            <span>🔮</span> 3Dに重ねて見る
           </button>
-          <button class="btn btn-cyan" id="btn-rotate-photo" onclick="rotateHandPhoto(90)" style="display: none; flex: 0.8; min-width: 90px; font-size: 0.84rem; padding: 0.85rem 0.4rem; background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; color: #38bdf8;">
+          <button class="btn btn-cyan" id="btn-save-scan-img" onclick="saveScanImage()" style="display: none; flex: 1; min-width: 115px; font-size: 0.82rem; padding: 0.85rem 0.4rem; background: rgba(52, 211, 153, 0.14); border-color: #34d399; color: #34d399;">
+            <span>💾</span> スキャン保存
+          </button>
+          <button class="btn btn-cyan" id="btn-rotate-photo" onclick="rotateHandPhoto(90)" style="display: none; flex: 0.7; min-width: 85px; font-size: 0.82rem; padding: 0.85rem 0.4rem; background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; color: #38bdf8;">
             <span>🔄</span> 90°回転
           </button>
-          <button class="btn btn-cyan" id="btn-camera-toggle-bottom" onclick="triggerPhotoCapture()" style="flex: 0.8; min-width: 90px; font-size: 0.84rem; padding: 0.85rem 0.4rem;">
+          <button class="btn btn-cyan" id="btn-camera-toggle-bottom" onclick="triggerPhotoCapture()" style="flex: 0.7; min-width: 85px; font-size: 0.82rem; padding: 0.85rem 0.4rem;">
             <span>📸</span> 再撮影
           </button>
         </div>
@@ -2205,6 +2222,46 @@
       palmMesh.position.z = -0.15;
       handMeshGroup.add(palmMesh);
 
+      // スキャン画像重畳用3Dサーフェスメッシュ（掌面前面の丘起伏に追従）
+      const overlayGeo = new THREE.ShapeGeometry(handShape, 24);
+      const oPos = overlayGeo.attributes.position;
+      const oUv = overlayGeo.attributes.uv;
+      for (let i = 0; i < oPos.count; i++) {
+        let x = oPos.getX(i);
+        let y = oPos.getY(i);
+        let z = 0.305;
+        if (y < 0.9) {
+          let vDist = Math.hypot(x - (-1.2), y - (-1.2));
+          let vH = Math.max(0, 1.0 - vDist / 1.7) * 0.48;
+          let mDist = Math.hypot(x - (1.3), y - (-1.4));
+          let mH = Math.max(0, 1.0 - mDist / 1.6) * 0.36;
+          let cDist = Math.hypot(x, y - (-0.2));
+          let cH = -Math.max(0, 1.0 - cDist / 1.5) * 0.18;
+          z += vH + mH + cH;
+        }
+        oPos.setZ(i, z);
+        // 3D手形状のバウンディングボックスに合わせてUV(0..1)を正規化
+        const u = (x - (-3.55)) / (2.60 - (-3.55));
+        const v = (y - (-3.45)) / (4.75 - (-3.45));
+        oUv.setXY(i, u, v);
+      }
+      overlayGeo.computeVertexNormals();
+      const overlayMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.78,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+      window.scanOverlayMesh = new THREE.Mesh(overlayGeo, overlayMat);
+      window.scanOverlayMesh.visible = false;
+      handMeshGroup.add(window.scanOverlayMesh);
+      if (typeof window.latestScanCanvasTexture !== 'undefined' && window.latestScanCanvasTexture) {
+        window.scanOverlayMesh.material.map = window.latestScanCanvasTexture;
+        window.scanOverlayMesh.material.needsUpdate = true;
+        window.scanOverlayMesh.visible = window.scanOverlayVisible !== false;
+      }
+
       // 手の輪郭と関節を繊細に輝かせるホログラム・エッジライン
       const wireMat = new THREE.MeshBasicMaterial({
         color: 0x38bdf8,
@@ -2457,6 +2514,80 @@
       timelineMarkers.forEach(t => t.visible = timelineVisible);
     }
 
+    window.scanOverlayVisible = true;
+    window.latestScanCanvasTexture = null;
+
+    function toggle3DScanOverlay() {
+      playSound('beep');
+      window.scanOverlayVisible = !window.scanOverlayVisible;
+      if (window.scanOverlayMesh) {
+        window.scanOverlayMesh.visible = window.scanOverlayVisible && !!window.latestScanCanvasTexture;
+      }
+      const btn = document.getElementById('btn-toggle-scan-overlay');
+      if (btn) btn.classList.toggle('active', window.scanOverlayVisible);
+    }
+
+    function applyScanTextureTo3D() {
+      const compCanvas = document.getElementById('scan-composite-canvas');
+      if (!compCanvas || compCanvas.width === 0) return;
+
+      const texW = 512, texH = 680;
+      const texCanvas = document.createElement('canvas');
+      texCanvas.width = texW;
+      texCanvas.height = texH;
+      const tctx = texCanvas.getContext('2d');
+      tctx.clearRect(0, 0, texW, texH);
+
+      if (lastDetectedLandmarks && lastDetectedLandmarks.length >= 21) {
+        const wPt = lastDetectedLandmarks[0];
+        const mPt = lastDetectedLandmarks[9];
+        const sx = wPt.x * compCanvas.width, sy = wPt.y * compCanvas.height;
+        const mx = mPt.x * compCanvas.width, my = mPt.y * compCanvas.height;
+        const srcAngle = Math.atan2(my - sy, mx - sx);
+        const palmDist = Math.hypot(mx - sx, my - sy) || (compCanvas.height * 0.3);
+        const targetDist = texH * 0.36;
+        const scale = Math.max(0.4, Math.min(2.6, targetDist / palmDist));
+
+        tctx.save();
+        tctx.translate(texW * 0.56, texH * 0.88);
+        tctx.rotate(-Math.PI / 2 - srcAngle);
+        if (current3DHand === 'right') {
+          tctx.scale(-scale, scale);
+        } else {
+          tctx.scale(scale, scale);
+        }
+        tctx.drawImage(compCanvas, -sx, -sy);
+        tctx.restore();
+      } else {
+        const scale = Math.min(texW / compCanvas.width, texH / compCanvas.height) * 0.92;
+        const dw = compCanvas.width * scale;
+        const dh = compCanvas.height * scale;
+        tctx.drawImage(compCanvas, (texW - dw) / 2, (texH - dh) / 2, dw, dh);
+      }
+
+      const tex = new THREE.CanvasTexture(texCanvas);
+      tex.needsUpdate = true;
+      window.latestScanCanvasTexture = tex;
+      window.scanOverlayVisible = true;
+
+      if (window.scanOverlayMesh) {
+        window.scanOverlayMesh.material.map = tex;
+        window.scanOverlayMesh.material.needsUpdate = true;
+        window.scanOverlayMesh.visible = true;
+      }
+
+      const btn = document.getElementById('btn-toggle-scan-overlay');
+      if (btn) {
+        btn.style.display = 'inline-flex';
+        btn.classList.add('active');
+      }
+    }
+
+    function openScanIn3D() {
+      applyScanTextureTo3D();
+      switchTab('tab-3d-model');
+    }
+
     function focusCameraOn(lineType) {
       playSound('beep');
       const lines = {
@@ -2642,76 +2773,217 @@
       ctx.restore();
     }
 
-    // 9つの丘＆4大基本線ガイドオーバーレイ描画
-    function drawPalmMountsAndLinesOverlay(ctx, landmarks, w, h) {
+    // 9つの丘＆6大基本線（実掌紋トレース＋「これは〇〇線」ラベル）オーバーレイ描画
+    function drawPalmMountsAndLinesOverlay(ctx, landmarks, w, h, valleyMap = null) {
       if (!landmarks || landmarks.length < 21) return;
       const pt = (idx) => ({ x: landmarks[idx].x * w, y: landmarks[idx].y * h });
       const wrist = pt(0), thumbBase = pt(2), idxBase = pt(5), midBase = pt(9), ringBase = pt(13), pinkyBase = pt(17);
       const palmCenter = { x: (wrist.x + midBase.x) * 0.5, y: (wrist.y + midBase.y) * 0.5 };
       const lerp = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+      const palmSpan = Math.hypot(pinkyBase.x - idxBase.x, pinkyBase.y - idxBase.y) || (w * 0.25);
 
-      ctx.save();
-      // 4大基本線の推定ガイドカーブ
-      const lifeStart = lerp(idxBase, thumbBase, 0.55);
-      const lifeCtrl = lerp(thumbBase, palmCenter, 0.48);
-      const lifeEnd = lerp(wrist, thumbBase, 0.25);
+      // 二次ベジェ曲線上の点をサンプリングしつつ、近傍の実際のシワ(valleyMap)へ吸着
+      const traceLineWithCrease = (p0, cp, p1, steps = 6) => {
+        const pts = [];
+        const searchR = Math.max(8, Math.round(palmSpan * 0.085));
+        for (let s = 0; s <= steps; s++) {
+          const t = s / steps;
+          const bx = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * cp.x + t * t * p1.x;
+          const by = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * cp.y + t * t * p1.y;
+          let fx = bx, fy = by;
+          if (valleyMap && s > 0 && s < steps) {
+            let bestVal = 4;
+            let bestX = bx, bestY = by;
+            const ix0 = Math.max(2, Math.round(bx - searchR));
+            const ix1 = Math.min(w - 3, Math.round(bx + searchR));
+            const iy0 = Math.max(2, Math.round(by - searchR));
+            const iy1 = Math.min(h - 3, Math.round(by + searchR));
+            for (let yy = iy0; yy <= iy1; yy += 2) {
+              for (let xx = ix0; xx <= ix1; xx += 2) {
+                const v = valleyMap[yy * w + xx];
+                if (v > bestVal) {
+                  bestVal = v;
+                  bestX = xx;
+                  bestY = yy;
+                }
+              }
+            }
+            fx = bx * 0.52 + bestX * 0.48;
+            fy = by * 0.52 + bestY * 0.48;
+          }
+          pts.push({ x: fx, y: fy });
+        }
+        return pts;
+      };
 
-      const headStart = lerp(idxBase, thumbBase, 0.45);
-      const headEnd = lerp(lerp(pinkyBase, wrist, 0.52), palmCenter, 0.22);
-
-      const heartStart = lerp(pinkyBase, wrist, 0.22);
-      const heartEnd = lerp(idxBase, midBase, 0.5);
-
-      const fateStart = lerp(wrist, palmCenter, 0.15);
-      const fateEnd = lerp(midBase, palmCenter, 0.18);
-
-      const drawGuideLine = (p0, cp, p1, color) => {
+      const drawSmoothCurve = (pts, color, isFocused) => {
+        if (pts.length < 2) return;
         ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y);
-        ctx.quadraticCurveTo(cp.x, cp.y, p1.x, p1.y);
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let k = 1; k < pts.length - 1; k++) {
+          const mx = (pts[k].x + pts[k + 1].x) * 0.5;
+          const my = (pts[k].y + pts[k + 1].y) * 0.5;
+          ctx.quadraticCurveTo(pts[k].x, pts[k].y, mx, my);
+        }
+        ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
         ctx.strokeStyle = color;
-        ctx.lineWidth = Math.max(2.5, w * 0.0055);
-        ctx.setLineDash([8, 5]);
+        ctx.lineWidth = isFocused ? Math.max(3.6, w * 0.0072) : Math.max(2.4, w * 0.0048);
         ctx.shadowColor = color;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = isFocused ? 14 : 6;
         ctx.stroke();
       };
 
-      drawGuideLine(lifeStart, lifeCtrl, lifeEnd, 'rgba(224, 86, 102, 0.9)');
-      drawGuideLine(headStart, lerp(headStart, headEnd, 0.55), headEnd, 'rgba(56, 189, 248, 0.9)');
-      drawGuideLine(heartStart, lerp(heartStart, heartEnd, 0.5), heartEnd, 'rgba(243, 229, 171, 0.92)');
-      drawGuideLine(fateStart, palmCenter, fateEnd, 'rgba(212, 175, 55, 0.9)');
-      ctx.setLineDash([]);
-
-      // 9つの丘ラベル
-      const mounts = [
-        { p: lerp(idxBase, palmCenter, 0.24), label: '木星丘', color: '#f3e5ab' },
-        { p: lerp(midBase, palmCenter, 0.22), label: '土星丘', color: '#f3e5ab' },
-        { p: lerp(ringBase, palmCenter, 0.22), label: '太陽丘', color: '#f3e5ab' },
-        { p: lerp(pinkyBase, palmCenter, 0.24), label: '水星丘', color: '#f3e5ab' },
-        { p: lerp(thumbBase, wrist, 0.45), label: '金星丘', color: '#fb7185' },
-        { p: lerp(pinkyBase, wrist, 0.65), label: '月丘', color: '#38bdf8' },
-        { p: palmCenter, label: '火星平原', color: '#34d399' }
+      // 各線の定義（始点・制御点・終点・ラベル位置オフセット）
+      const sideSign = (thumbBase.x < pinkyBase.x) ? -1 : 1; // 親指が左なら-1、右なら+1
+      const lineDefs = [
+        {
+          key: 'life',
+          label: '❤️ 生命線',
+          sub: '体力・耐久力',
+          color: '#fb7185',
+          p0: lerp(idxBase, thumbBase, 0.52),
+          cp: lerp(thumbBase, palmCenter, 0.52),
+          p1: lerp(wrist, thumbBase, 0.22),
+          anchorIdx: 3,
+          dx: sideSign * palmSpan * 0.42,
+          dy: palmSpan * 0.22
+        },
+        {
+          key: 'head',
+          label: '🧠 知能線',
+          sub: '思考・才能',
+          color: '#38bdf8',
+          p0: lerp(idxBase, thumbBase, 0.44),
+          cp: lerp(palmCenter, idxBase, 0.25),
+          p1: lerp(lerp(pinkyBase, wrist, 0.52), palmCenter, 0.16),
+          anchorIdx: 4,
+          dx: -sideSign * palmSpan * 0.34,
+          dy: palmSpan * 0.04
+        },
+        {
+          key: 'heart',
+          label: '💖 感情線',
+          sub: '心・対人運',
+          color: '#f472b6',
+          p0: lerp(pinkyBase, wrist, 0.22),
+          cp: lerp(ringBase, palmCenter, 0.28),
+          p1: lerp(idxBase, midBase, 0.45),
+          anchorIdx: 2,
+          dx: -sideSign * palmSpan * 0.34,
+          dy: -palmSpan * 0.16
+        },
+        {
+          key: 'fate',
+          label: '🌟 運命線',
+          sub: '仕事・自立運',
+          color: '#facc15',
+          p0: lerp(wrist, palmCenter, 0.14),
+          cp: palmCenter,
+          p1: lerp(midBase, palmCenter, 0.16),
+          anchorIdx: 3,
+          dx: sideSign * palmSpan * 0.32,
+          dy: -palmSpan * 0.06
+        },
+        {
+          key: 'sun',
+          label: '☀️ 太陽線',
+          sub: '人気・成功',
+          color: '#fb923c',
+          p0: lerp(ringBase, palmCenter, 0.58),
+          cp: lerp(ringBase, palmCenter, 0.34),
+          p1: lerp(ringBase, palmCenter, 0.14),
+          anchorIdx: 2,
+          dx: -sideSign * palmSpan * 0.28,
+          dy: -palmSpan * 0.26
+        },
+        {
+          key: 'money',
+          label: '💰 財運線',
+          sub: '金運・実利',
+          color: '#34d399',
+          p0: lerp(pinkyBase, palmCenter, 0.55),
+          cp: lerp(pinkyBase, palmCenter, 0.32),
+          p1: lerp(pinkyBase, palmCenter, 0.12),
+          anchorIdx: 2,
+          dx: -sideSign * palmSpan * 0.35,
+          dy: palmSpan * 0.14
+        }
       ];
 
-      const fontSize = Math.max(11, Math.round(w * 0.023));
+      ctx.save();
+      const focus = (typeof scanFocusLine !== 'undefined') ? scanFocusLine : 'all';
+      const fontSize = Math.max(11, Math.round(w * 0.024));
       ctx.font = `700 ${fontSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.shadowBlur = 0;
 
-      for (const m of mounts) {
-        const tw = ctx.measureText(m.label).width;
-        const pw = tw + 12, ph = fontSize + 8;
-        ctx.fillStyle = 'rgba(10, 14, 28, 0.82)';
-        ctx.strokeStyle = m.color;
-        ctx.lineWidth = 1.2;
+      for (const ld of lineDefs) {
+        if (focus !== 'all' && focus !== ld.key) continue;
+        // 'all' のときは4大線＋太陽線・財運線をすっきり表示
+        const pts = traceLineWithCrease(ld.p0, ld.cp, ld.p1, 6);
+        const isFocused = (focus === ld.key);
+        drawSmoothCurve(pts, ld.color, isFocused);
+
+        // 引き出し線＋「これは〇〇線」ラベルバッジ
+        const anchor = pts[Math.min(pts.length - 1, ld.anchorIdx)];
+        const lx = Math.max(58, Math.min(w - 58, anchor.x + ld.dx));
+        const ly = Math.max(24, Math.min(h - 24, anchor.y + ld.dy));
+
+        ctx.save();
+        ctx.shadowBlur = 0;
         ctx.beginPath();
-        ctx.roundRect(m.p.x - pw / 2, m.p.y - ph / 2, pw, ph, 6);
+        ctx.arc(anchor.x, anchor.y, Math.max(3.5, w * 0.006), 0, Math.PI * 2);
+        ctx.fillStyle = ld.color;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(anchor.x, anchor.y);
+        ctx.lineTo(lx, ly);
+        ctx.strokeStyle = ld.color;
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+
+        const labelText = isFocused ? `${ld.label}（${ld.sub}）` : ld.label;
+        const tw = ctx.measureText(labelText).width;
+        const pw = tw + 14, ph = fontSize + 10;
+        ctx.fillStyle = 'rgba(8, 11, 22, 0.88)';
+        ctx.strokeStyle = ld.color;
+        ctx.lineWidth = isFocused ? 2 : 1.3;
+        ctx.beginPath();
+        ctx.roundRect(lx - pw / 2, ly - ph / 2, pw, ph, 8);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = m.color;
-        ctx.fillText(m.label, m.p.x, m.p.y + 1);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText(labelText, lx, ly + 1);
+        ctx.restore();
+      }
+
+      // 9つの丘ラベル（mounts_mapモードのみ表示して視認性を両立）
+      if (typeof scanFilterMode !== 'undefined' && scanFilterMode === 'mounts_map') {
+        const mounts = [
+          { p: lerp(idxBase, palmCenter, 0.20), label: '木星丘', color: '#f3e5ab' },
+          { p: lerp(midBase, palmCenter, 0.18), label: '土星丘', color: '#f3e5ab' },
+          { p: lerp(ringBase, palmCenter, 0.18), label: '太陽丘', color: '#f3e5ab' },
+          { p: lerp(pinkyBase, palmCenter, 0.20), label: '水星丘', color: '#f3e5ab' },
+          { p: lerp(thumbBase, wrist, 0.45), label: '金星丘', color: '#fb7185' },
+          { p: lerp(pinkyBase, wrist, 0.65), label: '月丘', color: '#38bdf8' }
+        ];
+        const mFs = Math.max(10, Math.round(w * 0.02));
+        ctx.font = `700 ${mFs}px sans-serif`;
+        ctx.shadowBlur = 0;
+        for (const m of mounts) {
+          const tw = ctx.measureText(m.label).width;
+          const pw = tw + 10, ph = mFs + 7;
+          ctx.fillStyle = 'rgba(10, 14, 28, 0.78)';
+          ctx.strokeStyle = m.color;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(m.p.x - pw / 2, m.p.y - ph / 2, pw, ph, 5);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = m.color;
+          ctx.fillText(m.label, m.p.x, m.p.y + 1);
+        }
       }
       ctx.restore();
     }
@@ -2734,24 +3006,25 @@
       const ctx = compCanvas.getContext('2d', { willReadFrequently: true });
       ctx.drawImage(photoImg, 0, 0, w, h);
 
-      if (scanFilterMode === 'enhanced' || scanFilterMode === 'gold_relief') {
-        const imgData = ctx.getImageData(0, 0, w, h);
-        const d = imgData.data;
-        const gray = new Uint8Array(w * h);
-        for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-          gray[p] = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8;
-        }
-        // 高速ラプラシアン／局所陰影差で掌紋の溝を検出
-        for (let y = 2; y < h - 2; y++) {
-          for (let x = 2; x < w - 2; x++) {
-            const p = y * w + x;
-            const avg = (
-              gray[p - 2] + gray[p + 2] +
-              gray[p - 2 * w] + gray[p + 2 * w] +
-              gray[p - w - 1] + gray[p - w + 1] +
-              gray[p + w - 1] + gray[p + w + 1]
-            ) >> 3;
-            const valley = avg - gray[p]; // 正の値＝周囲より暗い溝（シワ）
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const d = imgData.data;
+      const gray = new Uint8Array(w * h);
+      for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+        gray[p] = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8;
+      }
+      const valleyMap = new Int16Array(w * h);
+      for (let y = 2; y < h - 2; y++) {
+        for (let x = 2; x < w - 2; x++) {
+          const p = y * w + x;
+          const avg = (
+            gray[p - 2] + gray[p + 2] +
+            gray[p - 2 * w] + gray[p + 2 * w] +
+            gray[p - w - 1] + gray[p - w + 1] +
+            gray[p + w - 1] + gray[p + w + 1]
+          ) >> 3;
+          const valley = avg - gray[p];
+          valleyMap[p] = valley;
+          if (scanFilterMode === 'enhanced' || scanFilterMode === 'gold_relief') {
             const idx = p * 4;
             if (scanFilterMode === 'gold_relief') {
               const base = gray[p] * 0.22;
@@ -2766,7 +3039,6 @@
                 d[idx + 2] = Math.min(255, base * 1.35 + 14);
               }
             } else {
-              // enhanced: 元写真の自然な色味を保ちつつシワの溝をくっきり強調
               if (valley > 6) {
                 const dark = Math.min(0.65, valley * 0.032);
                 d[idx] = Math.max(0, d[idx] * (1 - dark * 0.65));
@@ -2780,13 +3052,15 @@
             }
           }
         }
+      }
+      if (scanFilterMode === 'enhanced' || scanFilterMode === 'gold_relief') {
         ctx.putImageData(imgData, 0, 0);
       }
 
-      // 骨格＆9つの丘マップ描画
+      // 骨格＆6大線（「これは〇〇線」ラベル付き）＆9つの丘マップ描画
       if (lastDetectedLandmarks) {
-        if (scanFilterMode === 'enhanced' || scanFilterMode === 'mounts_map') {
-          drawPalmMountsAndLinesOverlay(ctx, lastDetectedLandmarks, w, h);
+        if (scanFilterMode !== 'original') {
+          drawPalmMountsAndLinesOverlay(ctx, lastDetectedLandmarks, w, h, valleyMap);
         }
         drawCyberSkeleton(ctx, lastDetectedLandmarks, w, h);
       }
@@ -2801,6 +3075,13 @@
       ctx.restore();
 
       compCanvas.style.display = 'block';
+
+      // 3Dモデルへの自動テクスチャ同期
+      try {
+        if (typeof applyScanTextureTo3D === 'function') {
+          applyScanTextureTo3D();
+        }
+      } catch (e) {}
 
       // 総合AIカルテのプレビュー画像にも反映
       try {
@@ -2851,7 +3132,11 @@
 
       if (rotateBtn) rotateBtn.style.display = 'inline-flex';
       if (saveScanBtn) saveScanBtn.style.display = 'inline-flex';
+      const view3dBtn = document.getElementById('btn-view-in-3d');
+      if (view3dBtn) view3dBtn.style.display = 'inline-flex';
       if (filterBar) filterBar.style.display = 'flex';
+      const lineToggles = document.getElementById('scan-line-toggles');
+      if (lineToggles) lineToggles.style.display = 'flex';
 
       hudStatus.textContent = 'SCANNING (AI 3D)';
       hudStatus.style.color = '#34d399';
