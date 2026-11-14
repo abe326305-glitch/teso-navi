@@ -1,6 +1,6 @@
 // Service Worker for 大人の本格手相＆姓名判断ナビ 3D (PWA)
 // v4: 常に最新を優先（ネットワーク優先）＋オフライン時のみキャッシュ
-const CACHE_NAME = 'teso-navi-cache-v4.1';
+const CACHE_NAME = 'teso-navi-cache-v4.2';
 const STATIC_ASSETS = [
   './', './index.html', './manifest.json', './favicon.ico', './favicon.png',
   './icon-192.png', './icon-512.png', './apple-touch-icon.png',
