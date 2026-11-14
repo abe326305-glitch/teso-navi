@@ -681,15 +681,122 @@
       .sound-btn { font-size: 0.72rem; padding: 4px 8px; }
       header p { font-size: 0.66rem; }
       .tab-btn { min-width: 96px; padding: 0.55rem 0.35rem; font-size: 0.72rem; }
-      main { padding: 0.7rem 0.5rem 2.5rem; }
+      main { padding: 0.7rem 0.5rem 5.4rem; }
       .card { padding: 0.85rem; margin-bottom: 0.8rem; }
       .card-title { font-size: 1.05rem; }
       .card-desc { font-size: 0.76rem; margin-bottom: 0.5rem; line-height: 1.45; }
       .viewport-3d-box { height: 360px; }
-      .camera-scanner-wrapper { height: min(52vh, 360px); }
+      .camera-scanner-wrapper { height: min(56vh, 410px); }
       .palm-target-guide { width: 150px; height: 190px; font-size: 2.4rem; margin-bottom: 0.6rem; }
       .camera-placeholder p { font-size: 0.84rem; }
-      .btn { padding: 0.7rem 0.6rem; font-size: 0.8rem; }
+      .btn { padding: 0.72rem 0.6rem; font-size: 0.82rem; }
+    }
+
+    /* スマホ用ボトム固定ナビゲーション */
+    .mobile-bottom-nav {
+      display: none;
+    }
+    @media (max-width: 720px) {
+      .nav-tabs { display: none; }
+      .mobile-bottom-nav {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 999;
+        background: rgba(10, 13, 24, 0.96);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(212, 175, 55, 0.35);
+        padding: 4px 2px calc(4px + env(safe-area-inset-bottom));
+        box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.7);
+      }
+      .m-nav-btn {
+        background: transparent;
+        border: none;
+        color: #9a98a6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 6px 2px;
+        font-size: 0.62rem;
+        font-family: var(--font-sans);
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.2s;
+      }
+      .m-nav-btn .m-ico { font-size: 1.15rem; line-height: 1.1; }
+      .m-nav-btn.active {
+        color: var(--gold-light);
+        background: rgba(212, 175, 55, 0.14);
+        font-weight: 700;
+      }
+    }
+
+    /* スキャン画像フィルター切替バー */
+    .scan-filter-bar {
+      display: none;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 0.75rem;
+      padding: 0.55rem;
+      background: rgba(14, 18, 35, 0.88);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 10px;
+    }
+    .scan-filter-btn {
+      flex: 1 1 46%;
+      padding: 0.52rem 0.45rem;
+      font-size: 0.76rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.04);
+      color: #d4d4dc;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .scan-filter-btn.active {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.28), rgba(224, 86, 102, 0.2));
+      border-color: var(--gold-primary);
+      color: var(--gold-light);
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.22);
+    }
+
+    /* ライブカメラ用手型ガイド */
+    .live-palm-guide {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 15;
+    }
+    .live-palm-guide-box {
+      width: 68%;
+      max-width: 240px;
+      aspect-ratio: 3 / 4;
+      border: 2px dashed rgba(212, 175, 55, 0.65);
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 10px;
+      box-shadow: inset 0 0 30px rgba(212, 175, 55, 0.08);
+    }
+    .live-palm-guide-label {
+      background: rgba(10, 13, 24, 0.8);
+      color: var(--gold-light);
+      font-size: 0.7rem;
+      padding: 3px 10px;
+      border-radius: 99px;
+      border: 1px solid rgba(212, 175, 55, 0.45);
     }
 
     /* リアルタイム認識ステータスパネル */
@@ -1420,10 +1527,16 @@
         </div>
 
         <!-- カメラ・スキャンビューワーコンテナ -->
-        <div class="camera-scanner-wrapper" id="scanner-wrapper" style="min-height: 380px; position: relative; background: #000; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+        <div class="camera-scanner-wrapper" id="scanner-wrapper" style="min-height: 360px; position: relative; background: #050711; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
           <video id="camera-video" autoplay playsinline muted style="display: none; width: 100%; height: 100%; object-fit: cover;"></video>
-          <img id="photo-preview-img" style="display: none; width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0;" alt="Hand Photo">
+          <img id="photo-preview-img" style="display: none;" alt="Hand Photo">
+          <canvas id="scan-composite-canvas" style="display: none; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; z-index: 8;"></canvas>
           <canvas id="ai-canvas-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></canvas>
+          <div class="live-palm-guide" id="live-palm-guide">
+            <div class="live-palm-guide-box">
+              <span class="live-palm-guide-label">手のひらを枠内に合わせてください</span>
+            </div>
+          </div>
           <div class="scan-laser-line" id="scan-laser"></div>
 
           <!-- 画面内上部 HUD -->
@@ -1433,13 +1546,13 @@
           </div>
 
           <!-- 案内プレースホルダー（未起動時） -->
-          <div class="camera-placeholder" id="camera-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center;">
+          <div class="camera-placeholder" id="camera-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; text-align: center;">
             <div class="palm-target-guide" style="font-size: 3.5rem; margin-bottom: 0.8rem; animation: pulse 2s infinite;">✋</div>
             <p style="font-size: 1rem; font-weight: 700; color: var(--gold-light); margin-bottom: 0.4rem;">
               上の「📸 手のひらをカメラで撮影」を押してください
             </p>
             <p style="font-size: 0.8rem; color: var(--text-sub); max-width: 320px; line-height: 1.5;">
-              手のひらを画面いっぱいに撮影すると、AIが21箇所の骨格関節を立体認識し、総合カルテを自動生成します。
+              明るい場所で手のひらを画面いっぱいに撮影すると、AIが掌紋（シワ）を強調抽出し、21骨格・9つの丘・4大基本線を自動マッピングします。
             </p>
           </div>
 
@@ -1451,15 +1564,26 @@
           </div>
         </div>
 
-        <!-- カメラ直下のボタングループ（回転ボタン追加） -->
-        <div class="btn-row" style="margin-top: 0.9rem; gap: 8px;">
-          <button class="btn btn-primary" id="btn-ai-scan-main" onclick="triggerAIScan()" disabled style="flex: 1.3; font-size: 0.92rem; padding: 0.85rem 0.5rem;">
-            <span>⚡</span> AIディープスキャン実行
+        <!-- スキャン画像スタイル切替バー（写真読み込み後に表示） -->
+        <div class="scan-filter-bar" id="scan-filter-bar">
+          <button class="scan-filter-btn active" data-mode="enhanced" onclick="setScanFilterMode('enhanced', this)">✨ 掌紋くっきり＋AI解析</button>
+          <button class="scan-filter-btn" data-mode="gold_relief" onclick="setScanFilterMode('gold_relief', this)">🔍 シワ強調（金泥プロ版）</button>
+          <button class="scan-filter-btn" data-mode="mounts_map" onclick="setScanFilterMode('mounts_map', this)">🌌 9つの丘＆4大線マップ</button>
+          <button class="scan-filter-btn" data-mode="original" onclick="setScanFilterMode('original', this)">📷 オリジナル＋骨格のみ</button>
+        </div>
+
+        <!-- カメラ直下のボタングループ -->
+        <div class="btn-row" style="margin-top: 0.85rem; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-primary" id="btn-ai-scan-main" onclick="triggerAIScan()" disabled style="flex: 1.4; min-width: 170px; font-size: 0.92rem; padding: 0.85rem 0.6rem;">
+            <span>⚡</span> 総合カルテへ反映
           </button>
-          <button class="btn btn-cyan" id="btn-rotate-photo" onclick="rotateHandPhoto(90)" style="display: none; flex: 1; font-size: 0.88rem; padding: 0.85rem 0.4rem; background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; color: #38bdf8;">
+          <button class="btn btn-cyan" id="btn-save-scan-img" onclick="saveScanImage()" style="display: none; flex: 1; min-width: 120px; font-size: 0.84rem; padding: 0.85rem 0.4rem; background: rgba(52, 211, 153, 0.14); border-color: #34d399; color: #34d399;">
+            <span>💾</span> スキャン画像保存
+          </button>
+          <button class="btn btn-cyan" id="btn-rotate-photo" onclick="rotateHandPhoto(90)" style="display: none; flex: 0.8; min-width: 90px; font-size: 0.84rem; padding: 0.85rem 0.4rem; background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; color: #38bdf8;">
             <span>🔄</span> 90°回転
           </button>
-          <button class="btn btn-cyan" id="btn-camera-toggle-bottom" onclick="triggerPhotoCapture()" style="flex: 1; font-size: 0.88rem; padding: 0.85rem 0.4rem;">
+          <button class="btn btn-cyan" id="btn-camera-toggle-bottom" onclick="triggerPhotoCapture()" style="flex: 0.8; min-width: 90px; font-size: 0.84rem; padding: 0.85rem 0.4rem;">
             <span>📸</span> 再撮影
           </button>
         </div>
@@ -1668,6 +1792,12 @@
         <div class="report-seal">AI 3D PALMISTRY PERSONAL DOSSIER</div>
         <h2 class="report-main-title" id="rep-title">自力開拓と卓越した直感を宿す、大器晩成の開運リーダー</h2>
         <div class="report-type-badge" id="rep-badge">タイプ：3Dホログラフィック・アドバンスド解析</div>
+
+        <!-- スキャンした手相画像の自動プレビュー（撮影・解析後に表示） -->
+        <div id="rep-scan-preview-wrap" style="display: none; margin: 0.9rem auto 1.1rem; text-align: center; background: rgba(8, 10, 20, 0.8); border: 1px solid rgba(212, 175, 55, 0.4); border-radius: 12px; padding: 0.75rem;">
+          <div style="font-size: 0.76rem; color: var(--gold-light); font-weight: 700; margin-bottom: 0.5rem;">📷 あなたのAI手相スキャン解析画像</div>
+          <img id="rep-scan-preview-img" src="" alt="AI手相スキャン画像" style="max-width: 100%; max-height: 260px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);">
+        </div>
 
         <!-- 4大能力スコアメーター -->
         <div class="score-grid">
@@ -1905,14 +2035,21 @@
     function switchTab(tabId) {
       playSound('beep');
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.m-nav-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
 
-      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => (b.getAttribute('onclick') || '').includes(tabId));
       if (activeBtn) activeBtn.classList.add('active');
+
+      const activeMBtn = Array.from(document.querySelectorAll('.m-nav-btn')).find(b => (b.getAttribute('onclick') || '').includes(tabId));
+      if (activeMBtn) activeMBtn.classList.add('active');
 
       const targetTab = document.getElementById(tabId);
       if (targetTab) targetTab.classList.add('active');
 
+      if (window.innerWidth <= 720) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       if (tabId === 'tab-3d-model') {
         onResize3D();
       }
@@ -2410,9 +2547,12 @@
 
     let currentFacingMode = 'user'; // 'user' (前面) or 'environment' (背面)
 
-    // 写真の回転角度管理
+    // 写真の回転角度・スキャン画像フィルター管理
     let currentPhotoImgData = null;
     let currentPhotoAngle = 0;
+    let scanFilterMode = 'enhanced'; // 'enhanced' | 'gold_relief' | 'mounts_map' | 'original'
+    let lastLoadedPhotoImg = null;
+    let lastDetectedLandmarks = null;
 
     // 撮影トリガー
     function triggerPhotoCapture() {
@@ -2447,11 +2587,252 @@
         const rotatedDataUrl = offCanvas.toDataURL('image/jpeg', 0.92);
         const photoImg = document.getElementById('photo-preview-img');
         if (photoImg) {
+          photoImg.onload = async function() {
+            await analyzeHandImageElement(photoImg);
+          };
           photoImg.src = rotatedDataUrl;
-          await analyzeHandImageElement(photoImg);
         }
       };
       img.src = currentPhotoImgData;
+    }
+
+    // スキャン画像フィルター切替
+    function setScanFilterMode(mode, btnEl) {
+      playSound('beep');
+      scanFilterMode = mode;
+      document.querySelectorAll('.scan-filter-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      renderCompositeScanImage();
+    }
+
+    // 21骨格サイバーライン描画（ズレなし統合版）
+    function drawCyberSkeleton(ctx, landmarks, w, h) {
+      if (!landmarks || landmarks.length < 21) return;
+      const connections = [
+        [0,1],[1,2],[2,3],[3,4],
+        [0,5],[5,6],[6,7],[7,8],
+        [5,9],[9,10],[10,11],[11,12],
+        [9,13],[13,14],[14,15],[15,16],
+        [13,17],[17,18],[18,19],[19,20],[0,17]
+      ];
+      ctx.save();
+      ctx.lineWidth = Math.max(2, w * 0.004);
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+      ctx.shadowColor = 'rgba(56, 189, 248, 0.9)';
+      ctx.shadowBlur = 8;
+      for (const [a, b] of connections) {
+        const pa = landmarks[a], pb = landmarks[b];
+        ctx.beginPath();
+        ctx.moveTo(pa.x * w, pa.y * h);
+        ctx.lineTo(pb.x * w, pb.y * h);
+        ctx.stroke();
+      }
+      ctx.shadowBlur = 10;
+      for (let idx = 0; idx < landmarks.length; idx++) {
+        const lm = landmarks[idx];
+        const isTip = [4, 8, 12, 16, 20].includes(idx);
+        ctx.beginPath();
+        ctx.arc(lm.x * w, lm.y * h, isTip ? Math.max(4.5, w * 0.009) : Math.max(3, w * 0.006), 0, Math.PI * 2);
+        ctx.fillStyle = isTip ? '#f3e5ab' : '#34d399';
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#0a0b12';
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 9つの丘＆4大基本線ガイドオーバーレイ描画
+    function drawPalmMountsAndLinesOverlay(ctx, landmarks, w, h) {
+      if (!landmarks || landmarks.length < 21) return;
+      const pt = (idx) => ({ x: landmarks[idx].x * w, y: landmarks[idx].y * h });
+      const wrist = pt(0), thumbBase = pt(2), idxBase = pt(5), midBase = pt(9), ringBase = pt(13), pinkyBase = pt(17);
+      const palmCenter = { x: (wrist.x + midBase.x) * 0.5, y: (wrist.y + midBase.y) * 0.5 };
+      const lerp = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+
+      ctx.save();
+      // 4大基本線の推定ガイドカーブ
+      const lifeStart = lerp(idxBase, thumbBase, 0.55);
+      const lifeCtrl = lerp(thumbBase, palmCenter, 0.48);
+      const lifeEnd = lerp(wrist, thumbBase, 0.25);
+
+      const headStart = lerp(idxBase, thumbBase, 0.45);
+      const headEnd = lerp(lerp(pinkyBase, wrist, 0.52), palmCenter, 0.22);
+
+      const heartStart = lerp(pinkyBase, wrist, 0.22);
+      const heartEnd = lerp(idxBase, midBase, 0.5);
+
+      const fateStart = lerp(wrist, palmCenter, 0.15);
+      const fateEnd = lerp(midBase, palmCenter, 0.18);
+
+      const drawGuideLine = (p0, cp, p1, color) => {
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.quadraticCurveTo(cp.x, cp.y, p1.x, p1.y);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(2.5, w * 0.0055);
+        ctx.setLineDash([8, 5]);
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+      };
+
+      drawGuideLine(lifeStart, lifeCtrl, lifeEnd, 'rgba(224, 86, 102, 0.9)');
+      drawGuideLine(headStart, lerp(headStart, headEnd, 0.55), headEnd, 'rgba(56, 189, 248, 0.9)');
+      drawGuideLine(heartStart, lerp(heartStart, heartEnd, 0.5), heartEnd, 'rgba(243, 229, 171, 0.92)');
+      drawGuideLine(fateStart, palmCenter, fateEnd, 'rgba(212, 175, 55, 0.9)');
+      ctx.setLineDash([]);
+
+      // 9つの丘ラベル
+      const mounts = [
+        { p: lerp(idxBase, palmCenter, 0.24), label: '木星丘', color: '#f3e5ab' },
+        { p: lerp(midBase, palmCenter, 0.22), label: '土星丘', color: '#f3e5ab' },
+        { p: lerp(ringBase, palmCenter, 0.22), label: '太陽丘', color: '#f3e5ab' },
+        { p: lerp(pinkyBase, palmCenter, 0.24), label: '水星丘', color: '#f3e5ab' },
+        { p: lerp(thumbBase, wrist, 0.45), label: '金星丘', color: '#fb7185' },
+        { p: lerp(pinkyBase, wrist, 0.65), label: '月丘', color: '#38bdf8' },
+        { p: palmCenter, label: '火星平原', color: '#34d399' }
+      ];
+
+      const fontSize = Math.max(11, Math.round(w * 0.023));
+      ctx.font = `700 ${fontSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowBlur = 0;
+
+      for (const m of mounts) {
+        const tw = ctx.measureText(m.label).width;
+        const pw = tw + 12, ph = fontSize + 8;
+        ctx.fillStyle = 'rgba(10, 14, 28, 0.82)';
+        ctx.strokeStyle = m.color;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.roundRect(m.p.x - pw / 2, m.p.y - ph / 2, pw, ph, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = m.color;
+        ctx.fillText(m.label, m.p.x, m.p.y + 1);
+      }
+      ctx.restore();
+    }
+
+    // 掌紋（手相のシワ）強調フィルター処理 ＆ 統合Canvasレンダリング
+    function renderCompositeScanImage() {
+      const photoImg = lastLoadedPhotoImg;
+      const compCanvas = document.getElementById('scan-composite-canvas');
+      if (!photoImg || !compCanvas) return;
+
+      const maxDim = 900;
+      const nw = photoImg.naturalWidth || 640;
+      const nh = photoImg.naturalHeight || 480;
+      const scale = Math.min(1, maxDim / Math.max(nw, nh));
+      const w = Math.round(nw * scale);
+      const h = Math.round(nh * scale);
+
+      compCanvas.width = w;
+      compCanvas.height = h;
+      const ctx = compCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(photoImg, 0, 0, w, h);
+
+      if (scanFilterMode === 'enhanced' || scanFilterMode === 'gold_relief') {
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const d = imgData.data;
+        const gray = new Uint8Array(w * h);
+        for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+          gray[p] = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8;
+        }
+        // 高速ラプラシアン／局所陰影差で掌紋の溝を検出
+        for (let y = 2; y < h - 2; y++) {
+          for (let x = 2; x < w - 2; x++) {
+            const p = y * w + x;
+            const avg = (
+              gray[p - 2] + gray[p + 2] +
+              gray[p - 2 * w] + gray[p + 2 * w] +
+              gray[p - w - 1] + gray[p - w + 1] +
+              gray[p + w - 1] + gray[p + w + 1]
+            ) >> 3;
+            const valley = avg - gray[p]; // 正の値＝周囲より暗い溝（シワ）
+            const idx = p * 4;
+            if (scanFilterMode === 'gold_relief') {
+              const base = gray[p] * 0.22;
+              if (valley > 5) {
+                const boost = Math.min(255, valley * 9.5);
+                d[idx] = Math.min(255, base + boost * 1.0);
+                d[idx + 1] = Math.min(255, base + boost * 0.82);
+                d[idx + 2] = Math.min(255, base * 1.4 + boost * 0.3);
+              } else {
+                d[idx] = base * 0.7;
+                d[idx + 1] = base * 0.78;
+                d[idx + 2] = Math.min(255, base * 1.35 + 14);
+              }
+            } else {
+              // enhanced: 元写真の自然な色味を保ちつつシワの溝をくっきり強調
+              if (valley > 6) {
+                const dark = Math.min(0.65, valley * 0.032);
+                d[idx] = Math.max(0, d[idx] * (1 - dark * 0.65));
+                d[idx + 1] = Math.max(0, d[idx + 1] * (1 - dark * 0.9));
+                d[idx + 2] = Math.max(0, d[idx + 2] * (1 - dark * 0.85));
+              } else {
+                d[idx] = Math.min(255, d[idx] * 1.05);
+                d[idx + 1] = Math.min(255, d[idx + 1] * 1.04);
+                d[idx + 2] = Math.min(255, d[idx + 2] * 1.02);
+              }
+            }
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+      }
+
+      // 骨格＆9つの丘マップ描画
+      if (lastDetectedLandmarks) {
+        if (scanFilterMode === 'enhanced' || scanFilterMode === 'mounts_map') {
+          drawPalmMountsAndLinesOverlay(ctx, lastDetectedLandmarks, w, h);
+        }
+        drawCyberSkeleton(ctx, lastDetectedLandmarks, w, h);
+      }
+
+      // 透かしラベル
+      ctx.save();
+      const tagFs = Math.max(11, Math.round(w * 0.02));
+      ctx.font = `700 ${tagFs}px sans-serif`;
+      ctx.fillStyle = 'rgba(212, 175, 55, 0.85)';
+      ctx.textAlign = 'right';
+      ctx.fillText('AI 3D PALMISTRY SCAN', w - 12, h - 12);
+      ctx.restore();
+
+      compCanvas.style.display = 'block';
+
+      // 総合AIカルテのプレビュー画像にも反映
+      try {
+        const repWrap = document.getElementById('rep-scan-preview-wrap');
+        const repImg = document.getElementById('rep-scan-preview-img');
+        if (repWrap && repImg) {
+          repImg.src = compCanvas.toDataURL('image/jpeg', 0.9);
+          repWrap.style.display = 'block';
+        }
+      } catch (e) {}
+    }
+
+    // スキャン画像をPNG保存
+    function saveScanImage() {
+      const compCanvas = document.getElementById('scan-composite-canvas');
+      if (!compCanvas || compCanvas.style.display === 'none') return;
+      playSound('success');
+      const a = document.createElement('a');
+      a.download = 'teso_ai_scan_result.png';
+      a.href = compCanvas.toDataURL('image/png');
+      a.click();
+      if (typeof showSaveToast === 'function') {
+        showSaveToast('スキャン画像を保存しました！');
+      }
+    }
+
+    function simulateHandTracking() {
+      const trackStatus = document.getElementById('metric-track-status');
+      if (trackStatus) {
+        trackStatus.textContent = 'LIVE READY';
+        trackStatus.style.color = '#38bdf8';
+      }
     }
 
     // 画像に対するMediaPipe解析とマルチアングル自動補正
@@ -2461,9 +2842,17 @@
       const trackStatus = document.getElementById('metric-track-status');
       const scanBtnMain = document.getElementById('btn-ai-scan-main');
       const rotateBtn = document.getElementById('btn-rotate-photo');
+      const saveScanBtn = document.getElementById('btn-save-scan-img');
+      const filterBar = document.getElementById('scan-filter-bar');
       const laser = document.getElementById('scan-laser');
 
+      lastLoadedPhotoImg = photoImg;
+      lastDetectedLandmarks = null;
+
       if (rotateBtn) rotateBtn.style.display = 'inline-flex';
+      if (saveScanBtn) saveScanBtn.style.display = 'inline-flex';
+      if (filterBar) filterBar.style.display = 'flex';
+
       hudStatus.textContent = 'SCANNING (AI 3D)';
       hudStatus.style.color = '#34d399';
       trackStatus.textContent = 'AI DETECTING...';
@@ -2471,17 +2860,20 @@
       laser.classList.add('laser-active');
       playSound('scan');
 
-      canvas.width = photoImg.naturalWidth || 640;
-      canvas.height = photoImg.naturalHeight || 480;
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (canvas) {
+        const cctx = canvas.getContext('2d');
+        cctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // まずフィルタ処理済み画像を表示
+      renderCompositeScanImage();
 
       let detected = false;
       try {
         await initMediaPipeHands();
         if (handsAI) {
           await handsAI.send({ image: photoImg });
-          if (lastScanMetrics.palmRatio && lastScanMetrics.palmRatio !== '1.18') {
+          if (lastDetectedLandmarks) {
             detected = true;
           }
         }
@@ -2489,17 +2881,18 @@
         console.warn('Hands AI processing on photo:', err);
       }
 
-      // 横向き等で検出されなかった場合も、幾何学的な比率を安定算定
-      if (!detected || !lastScanMetrics.palmRatio) {
+      if (!detected) {
         const randP = (1.14 + Math.random() * 0.08).toFixed(2);
         const randF = (0.96 + Math.random() * 0.06).toFixed(2);
         lastScanMetrics.palmRatio = randP;
         lastScanMetrics.fingerRatio = randF;
         document.getElementById('metric-palm-ratio').textContent = randP;
         document.getElementById('metric-finger-ratio').textContent = randF;
+      } else {
+        renderCompositeScanImage();
       }
 
-      trackStatus.textContent = 'LOCKED (3D)';
+      trackStatus.textContent = detected ? 'LOCKED (21pt)' : 'ENHANCED';
       trackStatus.style.color = '#34d399';
       if (scanBtnMain) scanBtnMain.disabled = false;
 
@@ -2507,7 +2900,7 @@
         laser.classList.remove('laser-active');
         playSound('success');
         applyScanToReport();
-      }, 1400);
+      }, 1100);
     }
 
     // 写真撮影 ＆ アップロード画像のMediaPipe AI解析
@@ -2519,18 +2912,17 @@
       const placeholder = document.getElementById('camera-placeholder');
       const video = document.getElementById('camera-video');
       const photoImg = document.getElementById('photo-preview-img');
-      const canvas = document.getElementById('ai-canvas-overlay');
-      const laser = document.getElementById('scan-laser');
+      const guide = document.getElementById('live-palm-guide');
       const hudStatus = document.getElementById('hud-camera-status');
       const trackStatus = document.getElementById('metric-track-status');
-      const scanBtnMain = document.getElementById('btn-ai-scan-main');
 
       // プレビュー表示
       placeholder.style.display = 'none';
       if (video) video.style.display = 'none';
-      photoImg.style.display = 'block';
+      if (guide) guide.style.display = 'none';
+      photoImg.style.display = 'none';
 
-      hudStatus.textContent = 'IMAGE: LOADING';
+      hudStatus.textContent = 'IMAGE: ENHANCING';
       hudStatus.style.color = '#38bdf8';
       trackStatus.textContent = 'AI DETECTING...';
       trackStatus.style.color = '#fbbf24';
@@ -2539,10 +2931,10 @@
       reader.onload = async function(evt) {
         currentPhotoImgData = evt.target.result;
         currentPhotoAngle = 0;
-        photoImg.src = evt.target.result;
         photoImg.onload = async function() {
           await analyzeHandImageElement(photoImg);
         };
+        photoImg.src = evt.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -2578,6 +2970,8 @@
 
         video.style.display = 'none';
         placeholder.style.display = 'flex';
+        const guideEl = document.getElementById('live-palm-guide');
+        if (guideEl) guideEl.style.display = 'none';
         flipBtn.style.display = 'none';
         floatingShutter.style.display = 'none';
         scanBtnMain.disabled = true;
@@ -2600,6 +2994,12 @@
           await initMediaPipeHands();
           placeholder.style.display = 'none';
           if (photoImg) photoImg.style.display = 'none';
+          const compCanvasEl = document.getElementById('scan-composite-canvas');
+          if (compCanvasEl) compCanvasEl.style.display = 'none';
+          const filterBarEl = document.getElementById('scan-filter-bar');
+          if (filterBarEl) filterBarEl.style.display = 'none';
+          const guideEl = document.getElementById('live-palm-guide');
+          if (guideEl) guideEl.style.display = 'flex';
           video.style.display = 'block';
 
           if (typeof Camera !== 'undefined' && handsAI) {
@@ -2667,37 +3067,37 @@
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       const video = document.getElementById('camera-video');
-      const photoImg = document.getElementById('photo-preview-img');
+      const isLiveVideo = video && video.style.display !== 'none';
 
-      if (video.style.display !== 'none') {
+      if (isLiveVideo) {
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 480;
-      } else if (photoImg && photoImg.style.display !== 'none') {
-        canvas.width = photoImg.naturalWidth || 640;
-        canvas.height = photoImg.naturalHeight || 480;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
         const landmarks = results.multiHandLandmarks[0];
-        document.getElementById('metric-track-status').textContent = 'LOCKED (3D)';
+        lastDetectedLandmarks = landmarks;
+        document.getElementById('metric-track-status').textContent = 'LOCKED (21pt)';
         document.getElementById('metric-track-status').style.color = '#34d399';
 
-        drawCyberSkeleton(ctx, landmarks, canvas.width, canvas.height);
+        if (isLiveVideo) {
+          drawPalmMountsAndLinesOverlay(ctx, landmarks, canvas.width, canvas.height);
+          drawCyberSkeleton(ctx, landmarks, canvas.width, canvas.height);
+        }
 
         const wrist = landmarks[0];
         const middleBase = landmarks[9];
-        const middleTip = landmarks[12];
         const indexTip = landmarks[8];
         const ringTip = landmarks[16];
 
         const palmLength = Math.hypot(wrist.x - middleBase.x, wrist.y - middleBase.y);
         const palmWidth = Math.hypot(landmarks[5].x - landmarks[17].x, landmarks[5].y - landmarks[17].y);
-        const palmRatio = palmWidth > 0 ? (palmLength / palmWidth).toFixed(2) : 1.18;
+        const palmRatio = palmWidth > 0 ? (palmLength / palmWidth).toFixed(2) : '1.18';
 
         const indexLen = Math.hypot(landmarks[5].x - indexTip.x, landmarks[5].y - indexTip.y);
-        const ringLen = Math.hypot(landmarks[17].x - ringTip.x, landmarks[17].y - ringTip.y);
-        const fingerRatio = ringLen > 0 ? (indexLen / ringLen).toFixed(2) : 0.98;
+        const ringLen = Math.hypot(landmarks[13].x - ringTip.x, landmarks[13].y - ringTip.y);
+        const fingerRatio = ringLen > 0 ? (indexLen / ringLen).toFixed(2) : '0.98';
 
         lastScanMetrics.palmRatio = palmRatio;
         lastScanMetrics.fingerRatio = fingerRatio;
@@ -3461,5 +3861,26 @@
     </div>
   </div>
 
+  <!-- スマホ専用ボトム固定ナビゲーション -->
+  <nav class="mobile-bottom-nav" aria-label="モバイルメニュー">
+    <button class="m-nav-btn active" onclick="switchTab('tab-name-birth')">
+      <span class="m-ico">✍️</span><span>名前・生年</span>
+    </button>
+    <button class="m-nav-btn" onclick="switchTab('tab-3d-model')">
+      <span class="m-ico">🔮</span><span>3D掌面</span>
+    </button>
+    <button class="m-nav-btn" onclick="switchTab('tab-ai-camera')">
+      <span class="m-ico">📷</span><span>AIスキャン</span>
+    </button>
+    <button class="m-nav-btn" onclick="switchTab('tab-twin-hands')">
+      <span class="m-ico">⚖️</span><span>左右比較</span>
+    </button>
+    <button class="m-nav-btn" onclick="switchTab('tab-report')">
+      <span class="m-ico">📜</span><span>総合カルテ</span>
+    </button>
+    <button class="m-nav-btn" onclick="switchTab('tab-dictionary')">
+      <span class="m-ico">🌌</span><span>9つの丘</span>
+    </button>
+  </nav>
 </body>
 </html>
